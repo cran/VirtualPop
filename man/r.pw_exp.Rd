@@ -2,34 +2,30 @@
 % Please edit documentation in R/r.pw_exp.R
 \name{r.pw_exp}
 \alias{r.pw_exp}
-\title{Sample from a piecewise-constant exponential distribution.}
+\title{Draws Waiting Times from a Piecewise-Exponential Distribution.}
 \usage{
 r.pw_exp(n, breakpoints, rates)
 }
 \arguments{
-\item{n}{Number of random draws required}
+\item{n}{Number of random draws}
 
-\item{breakpoints}{Breakpoints in piecewise-constant exponential
-distribution}
+\item{breakpoints}{Breakpoints in piecewise-exponential distribution}
 
 \item{rates}{Piecewise-constant rates}
 }
 \value{
-Vector of waiting times, drawn from piecewise-exponential survival
+Vector of waiting times, drawn randomly from a piecewise-exponential survival
 function.
 }
 \description{
-Takes n random draws from a piecewise-constant exponential distribution.
+The function produces n realizations of a piecewise-exponentially distributed random waiting time.
 }
 \examples{
 
 
 breakpoints <- c(0, 10, 20, 30, 60)
 rates <- c(0.01,0.02,0.04,0.15)
-pw_sample <- r.pw_exp (n=10, breakpoints, rates=rates)
+pw_sample <- VirtualPop::r.pw_exp (n=10, breakpoints, rates=rates)
 
 
-}
-\author{
-Frans Willekens
 }

@@ -2,42 +2,33 @@
 % Please edit documentation in R/GetRates.R
 \name{GetRates}
 \alias{GetRates}
-\title{Retrieves Data from HMD and HFD for a Selected Country (All Years)}
+\title{Retrieves Period Mortality and Fertility Rates from HMD and HFD for a Selected Country and Selected Year}
 \usage{
 GetRates(data, refyear)
 }
 \arguments{
-\item{data}{data}
+\item{data}{data (the object data_raw, produced by the GetData() function.)}
 
 \item{refyear}{Reference year, which is the year of period data}
 }
 \value{
-\item{ASDR}{Age-specific death rates, by sex (for reference year or
-all years)} \item{ASFR}{Age-specific birth rates by birth order (for
-reference year or all years)} \item{e0}{REMOVE}
+A list object with three elements:
+\item{ASDR}{Age-specific death rates, by sex for reference year} 
+\item{ASFR}{Age-specific birth rates by birth order for reference year}
+\item{ratesM}{Matrix of transition rates in format required for mulitstate modelling}
+The object returned by the function has three attributes:
+\item{country}{Country}
+\item{type}{Type of data (period data or cohort data)}
+\item{year}{Calendar year for which period death rates are used to complete cohort experience in case of incomplete mortality experience (reference year).}
 }
 \description{
-(a) Retrieves rates, the period life tables and the period fertility tables.
-(b) Computes death rates by age and sex, and birth rates by age and birth
-order.
-}
-\details{
-The user needs to register as a new user before data can be downloaded. To
-register with HMD, go to https://www.mortality.org. To register with HFD, go
-to https://www.humanfertility.org/cgi-bin/main.php.
-}
-\note{
-To access the HMD and HFD, the function used HMDHFDplus written by Tim
-Riffe and other at the Max Planck Institute for Demographic Research,
-Rostock, Germany
+The rates are retrieved from the life tables and fertility tables included in the raw data downloaded from the HMD and HFD.
 }
 \examples{
-
-
-\dontrun{ratesR <- GetRates(data,refyear)}
-
-
+\dontrun{
+# Not run because passwords needed
+# Input data: data_raw produced by GetData().
+rates <- GetRates(data=data_raw,refyear=2021)
 }
-\author{
-Frans Willekens
+
 }

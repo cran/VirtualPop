@@ -2,14 +2,14 @@
 % Please edit documentation in R/H_pw.R
 \name{H_pw}
 \alias{H_pw}
-\title{Computes cumulative hazard at duration t.}
+\title{Computes Cumulative Hazard at Duration t under a Piecewise Exponential Model}
 \usage{
 H_pw(t, breakpoints, rates)
 }
 \arguments{
-\item{t}{Duration at which cumulative hazard is required.}
+\item{t}{Duration at which cumulative hazard is required. It may be a vector of durations.}
 
-\item{breakpoints}{Breakpoints: values of x at which piecewise-constant
+\item{breakpoints}{Breakpoints: values of time at which piecewise-constant
 rates change.}
 
 \item{rates}{Piecewise-constant rates}
@@ -18,26 +18,22 @@ rates change.}
 Cumulative hazard at duration t
 }
 \description{
-Computes cumulative hazard at duration t from age-specific demographic
-rates.
+Computes cumulative hazard at duration t from piecewise-constant rates.
 }
 \examples{
-
+# Example 1
 breakpoints <- c(0, 10, 20, 30, 60)
 rates <- c(0.01,0.02,0.04,0.15)
-z <- H_pw(t=0:40, breakpoints=breakpoints, rates=rates)
+z <- VirtualPop::H_pw(t=0:40, breakpoints=breakpoints, rates=rates)
 
-
-utils::data(rates)
+# Example 2
+utils::data(rates,package="VirtualPop")
 ages <- as.numeric(rownames(rates$ASDR))
 breakpoints <- c(ages,120)
-zz <- H_pw(t=ages, breakpoints=breakpoints, rates=rates$ASDR[,1])
+zz <- VirtualPop::H_pw(t=ages, breakpoints=breakpoints, rates=rates$ASDR[,1])
 
 
 }
 \seealso{
-Function H_pw called by pw_root, which is called by r_pw_exp.
-}
-\author{
-Frans Willekens
+functions pw_root() and r_pw_exp(): Function H_pw() is called by pw_root(), which is called by r_pw_exp().
 }

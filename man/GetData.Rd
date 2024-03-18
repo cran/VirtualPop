@@ -2,32 +2,35 @@
 % Please edit documentation in R/GetData.R
 \name{GetData}
 \alias{GetData}
-\title{Reads data from the HMD and HFD}
+\title{Reads Data from the HMD and HFD into R}
 \usage{
 GetData(country, user, pw_HMD, pw_HFD)
 }
 \arguments{
-\item{country}{country}
+\item{country}{Code of the selected country. The code must be one of the country codes of HMD and HFD.}
 
-\item{user}{Name of the user, used at registration with the HMD and HFD. It
-is assumed that the same name is used for both HMD and HFD.}
+\item{user}{email address of the user, used at registration with the HMD and HFD. It
+is assumed that the same email address is used for both HMD and HFD.}
 
-\item{pw_HMD}{Password to access HMD, provided at registration}
+\item{pw_HMD}{Password to access HMD, provided at registration.}
 
 \item{pw_HFD}{Password to access HFD, provided at registration}
 }
 \value{
-\item{data_raw}{5 objects: country,life tables females,life tables males,fertility rates,female population (from HFD): exposures}
+\item{data_raw}{A list object with four elements:}
+\item{country}{Country}
+\item{LTf}{Life table for female population for all years available in the HMD}
+\item{LTm}{Life table for male population for all years available in the HMD}
+\item{fert_rates}{Conditional fertility rates for all years available in the HFD}
 }
 \description{
-Reads data from the HMD and HFD
+Reads data from the HMD and HFD into R. The function uses the readHMDweb() and the readHFDweb() functions of the HMDHFDplus package.
 }
 \examples{
 
 
-\dontrun{dataLH <- GetData(country="USA",user,pw_HMD,pw_HFD)}
-
+\dontrun{
+data_raw <- GetData(country="USA",user,pw_HMD,pw_HFD)
 }
-\author{
-Frans Willekens
+
 }

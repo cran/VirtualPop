@@ -2,31 +2,31 @@
 % Please edit documentation in R/Children.R
 \name{Children}
 \alias{Children}
-\title{Generates Individual Fertility Histories, Using Function Sim_bio.}
+\title{Generates Individual Fertility Histories}
 \usage{
-Children(dat0, rates)
+Children(dat0, rates, mort = NULL)
 }
 \arguments{
-\item{dat0}{Data frame with base individual data on members of virtual
-population}
+\item{dat0}{Data frame with data on individual members of the virtual population (dLH format)}
 
-\item{rates}{Mortality and fertility rates. The object 'rates' is produced
-by Getrates_refyear.R}
+\item{rates}{Mortality and fertility rates. The object 'rates' is produced by the function Getrates().}
+
+\item{mort}{Presence or absence of mortality (optional). Default: mortality is present (mort=TRUE). If mortality is absent, set mort=FALSE.}
 }
 \value{
-List object with two objects: (a) data frame with individual info
-and fertility history of egos and (b) children data frame
+List object with two components: 
+\item{data}{Data frame with updated information on members of the virtual population}
+\item{dch}{Data frame with information on children}
 }
 \description{
-Individual fertility histories
+Builds individual fertility histories from conditional fertility rates. Children() uses the function Sim_bio().
 }
 \examples{
-utils::data(dataLH)
-utils::data(rates)
-dat0 <- dataLH[1:10,]
-out <- Children(dat0=dat0,rates=rates)
+# The example generates data on children of the first 10 female members of 
+# the first generation of the virtual population.
+utils::data(dLH,package="VirtualPop")
+utils::data(rates,package="VirtualPop")
+dat0 <- dLH[dLH$sex=="Female" & dLH$gen==1,][1:10,]
+out <- VirtualPop::Children(dat0=dat0,rates=rates)
 
-}
-\author{
-Frans Willekens
 }

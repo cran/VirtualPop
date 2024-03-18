@@ -4,31 +4,27 @@
 \alias{Lifespan}
 \title{Generates Individual Lifespan(s)}
 \usage{
-Lifespan(data, ASDR)
+Lifespan(data, ASDR, mort = NULL)
 }
 \arguments{
-\item{data}{Data frame with individual data}
+\item{data}{Data frame with individual data. If the object "data" includes date of 
+birth (bdated; decimal date), then the date of death is computed.}
 
 \item{ASDR}{Age-specific death rates}
+
+\item{mort}{Presence or absence of mortality. This parameter is optional. Default is TRUE. If mortality is (should be) absent, mort=FALSE.}
 }
 \value{
-data: data frame 'dataLH' with date of death and age of death
-completed.
+\item{LS}{Data frame with age(s) at death and date(s) of death}
 }
 \description{
-Simulate length of life using age-specific death rates.Generate date of
-death and age at death. The function uses the rpexp function from the
-package msm and uniroot of base R
+Uses age-specific death rates to simulate length of life. The function generates age(s) at
+death and date(s) of death. The function uses the function rpexp() of the msm package and uniroot() of base R
 }
 \examples{
 
+utils::data(dLH,package="VirtualPop")
+utils::data(rates,package="VirtualPop")
+d <- VirtualPop::Lifespan (dLH[1:5,1:5],ASDR=rates$ASDR)
 
-utils::data(dataLH)
-utils::data(rates)
-z <- Lifespan (dataLH[1:5,],ASDR=rates$ASDR)
-
-
-}
-\author{
-Frans Willekens
 }

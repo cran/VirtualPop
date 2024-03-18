@@ -2,61 +2,37 @@
 % Please edit documentation in R/GetGenerations.R
 \name{GetGenerations}
 \alias{GetGenerations}
-\title{Creates Database 'dataLH' from Mortality Rates and Fertility Rates}
+\title{Builds a Multi-Generation Virtual Population from demographic parameters}
 \usage{
-GetGenerations(
-  rates,
-  ncohort,
-  ngen,
-  age_end_perc = NULL,
-  iages = NULL,
-  ID1 = NULL
-)
+GetGenerations(rates, ncohort = NULL, ngen = NULL, mort = NULL)
 }
 \arguments{
-\item{rates}{List object with death rates (ASDR) and birth rates (ASFR)}
+\item{rates}{List object with death rates (ASDR) and birth rates (ASFR). Produced by function VirtualPop::GetRates(). Rates of USA 2021 are distributed with the VirtualPop package.}
 
-\item{ncohort}{Size of hypothetical birth cohort}
+\item{ncohort}{Size of hypothetical birth cohort (first generation)}
 
-\item{ngen}{Number of generations to be simulated}
+\item{ngen}{Number of generations to be simulated. No upper limit.}
 
-\item{age_end_perc}{If age_end_perc is not missing (NULL), then the
-simulated ages at death are replaced by the age distribution given by
-age_end_perc. The age distribution is a matrix with 2 dolumns, one for
-females (column 1) and one for males (column 2). The distribution is given
-by single years of age.}
-
-\item{iages}{If iages is not missing, the vector of simulated ages at death
-is replaced by the vector of individual ages at censoring}
-
-\item{ID1}{Identification number of first person in virtual population being
-created (optional)}
+\item{mort}{Presence or absence of mortality. This parameter is optional. Default is TRUE. If mortality is absent, mort=FALSE.}
 }
 \value{
-\item{dataLH}{The database of simulated individual lifespans and
-fertility histories. The object 'dataLH' has two attributes: (a) the
-calendar year of period rates and (b) the country}
+\item{dataAllgen}{The database of simulated individual lifespans and
+fertility histories (all generations).}
+The object dataAllgen has four attributes:
+\item{country}{The country}
+\item{type}{The type of data (period data or cohort data).}
+\item{refyear}{The calendar year for which the period data are used (reference year).}
+\item{cohort}{The birth cohort (if applicable).}
 }
 \description{
-Creates database 'dataLH' from mortality rates by age and sex, and fertility
-rates by age of mother and birth order
-}
-\details{
-age_end_prec or iages are used to simulate ages at censoring. For instance,
-to compare the virtual population with a real population for which
-information is collected retorspectively in a cross-sectional survey, the
-simulation window must be equal to the observation window. In other words,
-the virtual population and the real population must have the same censoring.
+Builds a virtual population from mortality rates by age and sex, and fertility
+rates by age of mother and parity.
 }
 \examples{
 
 
-# The object rates is produced by the function GetRates.
-utils::data(rates)
-dLH <- GetGenerations (rates=rates,ncohort=100,ngen=4)
+utils::data(rates,package = "VirtualPop")
+dLH <- VirtualPop::GetGenerations (rates=rates,ncohort=1000,ngen=4)
 
 
-}
-\author{
-Frans Willekens
 }

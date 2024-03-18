@@ -3,18 +3,26 @@
 \docType{data}
 \name{rates}
 \alias{rates}
-\title{rates data}
+\title{Period rates}
 \format{
 A list of three objects. \describe{
 \item{ASDR}{Mortality rates} 
 \item{ASFR}{Fertility rates}
 \item{ratesM}{Multistate transition rates} }
+The dataset has three attributes:
+\itemize{
+ \item Country
+ \item Type of rates: period rates or cohort rates
+ \item Calendar year for which period death rates are used to complete cohort experience in case of incomplete mortality experience (reference year).
+}
 }
 \source{
 The data are downloaded from the Human Mortality Database (HMD) and
-the Human Fertility Database (HFD). Country: USA. Year: 2019
+the Human Fertility Database (HFD). Country: USA. Year: 2021
+}
+\usage{
+data(rates,package="VirtualPop")
 }
 \description{
-Mortality rates by age and sex: fertility rates by age and birth order
+Data consisting of period rates of mortality by age and sex and fertility by age and parity, USA 2021
 }
-\keyword{datasets}

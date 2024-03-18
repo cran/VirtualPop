@@ -1,49 +1,117 @@
 ---
-title: 'VirtualPop: Simulation of individual fertility careers from age-specific fertility
-  and mortality rates'
+title: |
+  VirtualPop  \
+  Simulation of individual lifespans and fertility careers
 author: "Frans Willekens"
+subtitle: A tutorial
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    number_sections: TRUE
+    toc: TRUE
+    toc_depth: 3
+    fig_caption: yes
+    keep_tex: true
   html_document:
+    number_sections: TRUE
     df_print: paged
-subtitle: A tutorial
+fontsize: 12pt
+urlcolor: blue
 bibliography: References.bib
-vignette: |
+vignette: >
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{VirtualPop: Simulation of individual fertility careers from age-specific fertility and mortality rates}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{VirtualPop: Simulation of individual lifespans and fertility careers}
+  %\VignetteEngine{knitr::knitr}
 ---
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.align = "center")
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "") 
+## No scientific notation
+options(scipen=999)
+```
+
+
+```{r echo=FALSE}
+knit_print.data.frame = function(x, ...) {
+  res = paste(c("", "", knitr::kable(x)), collapse = "\n")
+  knitr::asis_output(res)
+}
+registerS3method(
+  "knit_print", "data.frame", knit_print.data.frame,
+  envir = asNamespace("knitr")
 )
 ```
 
-## Introduction
 
-After going through this tutorial, you should be able to create virtual populations from fertility and mortality rates, downloaded from the Human Mortality Database (HMD) and the Human Fertility Database (HFD) for any country and any calendar year included in the database. The population may consist of multiple generations. The multi-generation virtual population is the point of departure of further analysis, using methods that are common in studies of a real population. 
 
-The principle underlying the generation of a virtual population is a separation of data generation and data analysis. The principle is inspired by the practice in sample surveys. Stochastic simulation and sample surveys have much in common. Both are *data-generating processes*. Simulation relies on a probability model to generate data, while a sample survey uses observations. That similarity guided the design of $VirtualPop$. Simulation is approached as sampling. The output of the simulation is a person file, comparable to the data structure commonly used in sample surveys.
+\newpage
+\listoffigures
+\listoftables
 
-The tutorial has seven sections. The first section describes how to install the package. The second is about downloading data from the HMD and HFD. The mortality and fertility rates are downloaded for a given country and for all years for which data are available. One year (*reference year*) is selected to produce the virtual population. Section three describes how to generate a virtual population. By default, fertility histories are generated from birth to death. Since censuses and sample surveys record fertility histories for segments of life, censoring schemes should be simulated too in order to ensure that demographic indicators computed for a virtual population are comparable to indicators computed from census or survey data. That is the subject of Section 4. An advantage of the separation of data generation and you do not need R to analyse the data. The export of the virtual population from R to STATA and SPSS is described in Section 5. Section 6 covers the conversion of decimal dates produced by $VirtualPop$ to calendar dates. Section 7 summarizes the steps by illustrating the generation of a virtual population from mortality and fertility rates of Japan.
+\newpage
 
-## Install the package
+# Introduction
 
-To install $VirtualPop$ and its dependencies from CRAN, use
+VirtualPop constructs a virtual populations from fertility and mortality rates for any country, calendar year (period data) and birth cohort (cohort data) in the [Human Mortality Database (HMD)](https://www.mortality.org) and the [Human Fertility Database (HFD)](https://www.humanfertility.org). Cohort data refer to a birth cohort, e.g. individuals born in 1964. Period data refer to data collected in a given calendar year, e.g. 2021. VirtualPop constructs a virtual population in three steps. In the first step, VirtualPop retrieves data programmatically from the HMD and the HFD. The retrieved data are for a country specified by the user. The retrieved data have the necessary mortality and fertility rates, but they may have other data too. In the second step, the mortality and fertility rates are extracted for the selected birth cohort (cohort data) or calendar year (period data). In the third step, *lifespans* and *fertility histories* are generated for all individuals in the virtual population and their offspring. The population that results has multiple generations, which offers the opportunity to study kinship networks and other subject that involve multiple generations and that are not feasible in real populations due to lack of data or for other reasons.
+
+During the simulation, VirtualPop generates a population register by recording the dates of the life events individuals experience, including marriage or union formation. The current version of VirtualPop uses a simple partner search model. VirtualPop includes two mortality scenarios: with and without mortality. If mortality is present, death is a competing risk. 
+
+The simulation relies on a multistate life history model  [@willekens2014; @cook2018multistate]. The model describes the life course as a sequence of states and transitions between states. The transitions we observe are realizations of an underlying stochastic process. The multistate life history model captures the main features of the underlying process. The vignettes "Sampling Piecewise-Exponential Waiting Time Distributions" and "Simulation of life histories" describe the model and illustrate its application to real-world data. The vignettes can be read using the code provided in Section 3.1. The validity of the simulation and the virtual population is discussed in a separate paper, entitled "Validation of a virtual population". A comparison of the virtual population with the reference population requires external data from registers and surveys. The pdf version of the paper is included in the doc file of the source package VirtualPop_1.1.0.tar.gz. 
+
+The virtual population can be produced in a single step produced using the function BuildViP(). The single step combines the three steps needed to generate a virtual population:
+
+  * Data retrieval: retrieval of data from the HMD and HFD.
+  * Rate computation: retrieval and computation of mortality and fertility rates. 
+  * Building the virtual population.
+
+The tutorial has 8 sections and two Appendices. The first section following the introduction lists the HMD and HFD data that are required and has a brief discussion of conditional fertility rates, more widely known as occurrence-exposure rates. Section 3 describes how to install VirtualPop, HMDHFDplus and other R packages VirtualPop relies on. Section 4 covers the production of a virtual population in a single step. The remaining sections cover each of the three steps in the production process. Downloading HMD and HFD data is covered in Section 5. Data may be downloaded manually or programmatically. The extraction of mortality and fertility rates and transforming the rates in the a format required by the multistate model is the subject of Section 6. Section 7 covers the simulation of individual lifespans and fertility histories with and without death as a competing risk. The tools discussed in Section 7 are used in Section 8 to produce a virtual population. It distinguishes between a virtual population generated from period data and a virtual population generated from cohort data. The Tutorial has two appendices. Appendix A is a description of the life histories data (dLH) object. Appendix B presents the code to export a virtual population from R to STATA and SPSS for data analysis. 
+
+# Data requirements
+
+## List of data required
+
+The HMD and HFD provide data for several countries. Countries are denoted by short codes of three letters (except for Great Britain and New Zealand). To get the list of countries and the code:
+
+```{r}
+countriesHMD <- HMDHFDplus::getHMDcountries()
+countriesHFD <- HMDHFDplus::getHFDcountries()
+# print (countries[,c(1,3)],n=nrow(countries))
+```
+
+The following data files are required for the simulation. 
+
+  * Period data
+
+    * Period life table for all years for which the data are available (1933 to 2021 in case of the United States). 
+      * Males: HMD data file $mltper\_1x1$.
+      * Females: HMD data file $fltper\_1x1$. 
+    * Conditional fertility rates for all years for which the data are available: HFD data file $mi$. The conditional fertility rates are also included in the period fertility tables '$pft$. 
+  
+  * Cohort data 
+
+    * Cohort death rates for males and females for all birth cohorts for which the data are available. HMD data file $cMx\_1x1$.
+    * Conditional fertility rates for several birth cohorts. The rates are not available as a separate dataset, but are included in the cohort fertility tables (HFD data file $cft$).
+
+## A note on conditional fertility rates
+
+A distinction is made between fertility rates by birth order and fertility rates by parity. Birth order is a property of a child. Parity is a property of a woman. It is the number of children born to a woman (of a given age). Fertility rates by birth order relate the number of births to *all women* (of a given age). Fertility rates by parity relate the number of births to *women of a given parity*. The two types of fertility rates differ in the denominator. In the HFD, the first type is referred to as unconditional fertility rates and fertility rates by birth order, the second as conditional fertility rates and fertility rates by parity (HFD parity estimates) [@jasilioniene2015methods, p. 18]. 
+
+Conditional fertility rates are *occurrence-exposure rates*. The latter is the term used in survival analysis, biostatistics and multistate demography (see e.g. @hoem1981multi, pp. 202ff; @aalen2008survival pp. 219ff.; @willekens2014). An occurrence-exposure rate relates the number of occurrences of an event in a given interval to the total duration of exposure to the risk of experiencing the event during that interval. In fertility analysis, the number of births of order j is related to the number of women at risk of giving birth to a j-th child. These are women with j-1 children ever born. Demographers use different terms to refer to occurrence-exposure rates, which is confusing. @preston2001demography[p. 3] and [@bongaarts2012demographic, p. 113] refer to occurrence-exposure rates as conditional fertility rates of the first kind. The HFD uses the term *conditional age- and order-specific fertility rates*, in short *conditional fertility rates* to denote occurrence-exposure rates [@jasilioniene2015methods; @jasilioniene2016data]. 
+
+Fertility tables describe the process of childbearing in real or synthetic female cohorts, focusing on the age and parity dimension [@jasilioniene2016data, p. 3]. They are essentially multistate life tables. @schoen2006insights refers to the fertility table as parity status life table. For a discussion of the fertility table from a statistical perspective, see @chiang1982fertility and @li2020projecting. 
+
+
+# Install packages VirtualPop, HMDHFDplus and other packages used in this tutorial
+
+## VirtualPop Version 1.1.0
+
+To install $VirtualPop$ and its dependencies from CRAN (Comprehensive R Archive Network), use
 ```{r,eval=FALSE}
 install.packages ("VirtualPop")
-```
-
-To install the package from GitHub, use
-
-```{r, eval=FALSE}
-devtools::install_github("willekens/VirtualPop")
-```
-
-with $devtools$ a package on CRAN. To install $devtools$ type
-```{r, eval=FALSE}
-install.packages("devtools")
 ```
 
 To load and attach the package, use
@@ -51,294 +119,667 @@ To load and attach the package, use
 library (VirtualPop)
 ```
 
-Using the HMD and HFD to create a virtual population involves three steps:
+The package VirtualPop has three vignettes:
 
-*  Download data from the HMD and HFD
-*  Create the data object $rates$. The rates are:  
-    - Death rates, by age and sex
-    - Fertility rates by age and birth order. In the HFD, the rates are called *conditional fertility rates*.
-*  Create the object $dataLH$. The object stores the simulated lifespans and fertility histories of all individuals in the virtual population. 
+*  *piecewise_exponential*: Sampling piecewise-exponential waiting time distribution
+*  *MultistateLH*: Simulation of life histories 
+*  *Tutorial*: VirtualPop: Simulation of individual fertility careers from age-specific fertility and mortality rates 
 
-Each step is a function of the package. The first, $Getdata()$, retrieves the data from the HMD and HFD. The second, $Getrates()$, produces the $rates$ object. The third, $GetGenerations()$, generates the virtual population. 
+To list the vignettes, type
 
-The package $VirtualPop$ has four vignettes:
-
-*  Sampling piecewise-exponential waiting time distribution (*piecewise_exponential*)
-*  Simulation of life histories (*MultistateLH*)
-*  Validation of the simulation (*Validation*)
-*  VirtualPop: Simulation of individual fertility careers from age-specific fertility and mortality rates (*Tutorial*)
-
-To see the list of vignettes, type
 ```{r eval=FALSE}
-utils::vignette (package="VirtualPop")
+utils::browseVignettes("VirtualPop")
 ```
-To read a vignette, e.g. $Tutorial$, type
+
+To open and read the vignette containing this Tutorial, type
+
 ```{r eval=FALSE}
 utils::vignette (topic="Tutorial",package="VirtualPop")
 ```
 
-## Download the data
+To list the data included in the package:
 
-The data in the HMD and HFD are provided free of charge to registered users.  At registration, basic contact information is obtained (i.e., name, e-mail address, affiliation, and title). To register, go to https://www.mortality.org and https://www.humanfertility.org . Upon acceptance of the agreement, you receive a password. The user name (e-mail address used at registration) and the password are required to download data. In this tutorial, it is assumed that you use the same e-mail address to register with the HMD and the HFD. 
+```{r eval=FALSE}
+data(package="VirtualPop")
+```
 
-Three data files are downloaded. Two are part of the HMD. The first, $fltper\_1x1$, contains the period life tables for females for several years (1933 to 2019 in case of the United States). The second, $mltper\_1x1$, contains the period life tables for males. One file, $mi.txt$, is retrieved from the HFD. The file contains the conditional fertility rates for several years. The test the validity of the simulation some additional data files are downloaded. They are used in Section 4 of this vignette and in the vignette *Validation of the simulation*. 
 
-A note on fertility rates is in order. Fertility rates by birth order are given different names, which contributes to the confusion. The term *occurrence-exposure rate* is the established term in survival analysis (ratio of occurrences to exposures during a discrete interval). The rates measure the childbearing intensity among women of a specific age and birth order (e.g., second births to woman of age x are related to women of age x of parity one and not to all women of age x). Occurrence-exposure rates differ from fertility rates by birth order commonly used in demography, which are ratios of number of children of birth order j born to women of a given age divided by **all** women of that age (in mid-year). In the occurrence-exposure rate, the denominator is the number of women of a given age in mid-year who are at risk of giving birth to a j-th child. These are women with j-1 children ever born. For a discussion of the fertility table from a statistical perspective, see @chiang1982fertility and @li2020projecting. 
 
-The demographers @preston2001demography[p. 3] and [@bongaarts2012demographic, p. 113] refer to occurrence-exposure rates as conditional fertility rates of the first kind. In biostatistics, transition rate is the general term and occurrence-exposure rate is reserved for the ratio of observed number of events (*occurrences*) and total exposure time (*exposure*) during a discrete interval [@aalen2008survival, pp. 215ff]. In biomedical statistics occurrence-exposure rates are also referred to as incidence rates [@Andersen2021analysis, p. 6]. The HFD uses the term *conditional age- and order-specific fertility rates*, in short *conditional fertility rates* to denote occurrence-exposure rates [@jasilioniene2015methods; @jasilioniene2016data]. 
+## HMDHFDplus Version 2.0.3
 
-The conditional fertility rates are extracted from period fertility tables, which in the HFD are data files with the extension "mi". Period fertility tables are increment-decrement life tables (multistate life tables) which model the process of childbearing in synthetic female cohorts, focusing on the age and parity dimension [@jasilioniene2016data, p. 3].
+The data in the HMD and HFD are provided free of charge to registered users.  At registration, basic contact information is obtained (i.e., name, e-mail address, affiliation, and title). To register, go to https://www.mortality.org and https://www.humanfertility.org . Upon acceptance of the agreement, you receive a password. The user name (e-mail address used at registration) and the password are required to download data. In this tutorial, it is assumed that you use the same e-mail address to register with the HMD and the HFD. If you registered before mid-2022, note that in 2022 HMD users were requested to re-register. 
 
-The virtual population is generated for a country and calendar year (period data) selected by the user. Countries are denoted by short codes of three letters (except for Great Britain and New Zealand). To get the list of countries and the code, you may consult the website or install and load the package *HMDHFDplus*:
+The HMDHFDplus package was developed by Tim Riffe and colleagues at the Max Planck Institute for Demographic Research in Rostock, Germany (@riffe2015hmdhfd). To install the package and check the version of the package installed, use:
 
-```{r,eval=FALSE}
-# install.packages ("HMDHFDplus")
+```{r eval=FALSE}
 library (HMDHFDplus)
-countries <- HMDHFDplus::getHMDcountries()
+version <- packageVersion("HMDHFDplus") # 2.0.3
 ```
 
-To download the data, you may consider two options. The first is to use the package *HMDHFDplus*. The second is to download the data manually. Consider the first option. The *HMDHFDplus* package was developed by Tim Riffe and colleagues at the Max Planck Institute for Demographic Research in Rostock, Germany. The functions $readHMDweb()$ and $readHFDweb()$ of the package *HMDHFDplus* download the data. The user name and passwords must be provided before running the code in this tutorial. They should be stored in the following objects: 
+## Other packages used by VirtualPop
 
-```{r,eval=FALSE}
-user <- "your email address"
-pw_HMD <- "password for HMD"
-pw_HFD <- "password for HFD"
-```
-The functions $readHMDweb$, $readHFDweb$ and $GetData()$ require the objects as arguments (see further). The code chunks in this section are not executed because a user name and passwords are required. 
+The package dependencies are installed automatically if you use install.packages("VirtualPop"). VirtualPop depends on two packages included in R base (stats and utils) and on the following contributed packages: HMDHFDplus, foreign, lubridate, ggplot2, knitr, kableExtra, msm and Families. The package rmarkdown is used to produce the vignettes. These packages and the vignettes use additional packages, such as dplyr, tidyr, httr, rvest, readr, and survival. All packages are on CRAN. To obtain a list of the packages used, type:
 
-Once you provided your username and passwords, you are ready to use the function $GetData$ to download the data of a given country from the HMD and HFD. To download data of the United States, use: 
-```{r,eval=FALSE}
-data_raw <- GetData (country="USA",user,pw_HMD,pw_HFD)
+```{r eval=FALSE}
+tools::package_dependencies(recursive = TRUE)$VirtualPop
 ```
 
-$data\_raw$ is a list object with five components:
+Installed packages are stored in a folder. You may specify the folder or leave the selection to the operating system. The system keeps track of the location and knows where to find a package when needed. To find out where the packages are located, type .libPaths() in the console. 
 
-* Country ($country$)
-* Life table for females ($df$)
-* Life table for males ($dm$)
-* Conditional fertility rates ($fert\_rates$)
-* Population ($dpopHMD$)
+Once installed, the packages must be loaded, i.e. imported into the workspace. The traditional approach is to use the library() function.  The function attaches a package to the search path and, when a function is called by name, R searches for packages in the order they are listed on the search path, e.g. the most recently loaded package is the first on the list. If two packages on the search path have a function with the same name, R takes the package first on the search path. It may not be the package you need. To prevent R from extracting the function from the wrong package, the R Core Team recommends to specify both the package and the function. The two names are separated by the double colon (::) operator. That practice, which replaces the library() function, is adopted in this paper. 
 
-The function $GetData()$ uses $readHMDweb()$ and $readHFDweb()$. You may want to use these functions directly without calling $GetData()$:
-```{r,eval=FALSE}
-country <- "USA"
-df <- HMDHFDplus::readHMDweb(CNTRY=country,item="fltper_1x1",username=user,password=pw_HMD,fixup=TRUE)
-dm <- HMDHFDplus::readHMDweb(CNTRY=country,item="mltper_1x1",username=user,password=pw_HMD,fixup=TRUE)
-fert_rates <- HMDHFDplus::readHFDweb(CNTRY=country,item="mi",username=user,password=pw_HFD,fixup=TRUE)
-dpopHMD <- HMDHFDplus::readHMDweb(CNTRY=country,item="Population",username=user,password=pw_HMD,fixup=TRUE) 
+To install the RStudio Integrated Development Environment (IDE) go to the Posit (formerly RStudio) website [here](https://posit.co/downloads/). If you are new to RStudio, you find an introduction for beginners [here](https://education.rstudio.com/learn/beginner/) and a tutorial [here](https://www.datacamp.com/tutorial/r-studio-tutorial). 
+
+# Generate a virtual population in a single step: the function BuildViP()
+
+The single step combines the three steps. The three steps are:
+
+  * Retrieve the raw data from the HMD and HFD
+  * Prepare a dataset with mortality and fertility rates.
+  * Generate a virtual population and create the object $dLH$. The object has information on all individuals in the multi-generational virtual population.
+
+```{r echo=FALSE}
+utils::data(dLH,package="VirtualPop")
+ncohort <- length(dLH$ID[dLH$gen==1])
 ```
-The functions download the selected data for all years. The number of years for which data are provided differ by country. Let $country$ denote the country selected, e.g. USA. For the USA,the HMD provides data for 41 countries, while the HFD provides data for 33 countries. To list the number of calendar years covered by the HMD and HFD, use
-```{r,eval=FALSE}
-yearsHMD <- unique(df$Year)
-yearsHFD <- unique(fert_rates$Year)
-```
-If you are using Rstudio integrated development environment (IDE) and defined a project, the file is saved in the *project directory*. The project directory points to the folder where the $.Rproj$ file is saved, which in Rstudio is called *root folder¨*. It differs from *current working directory* displayed by the RStudio IDE within the title region of the Console pane. The function $getwd()$ called from the Rstudio console retrieves the directory listed within the title plane of the Console pane. The reason for the difference is that R defines an *absolute* file path (set by $setwd()$) and Rstudio defines a *relative* file path. The relative path is not affected by a migration of $.Rproj$ to another location, but the absolute path is. 
 
-The second option is to download $fltper\_1x1$, $mltper\_1x1$ and $Population$ manually from the HMD website and $mi$ from the HFD website. The URLs of the files for the United State are:
+Each step is a function of the VirtualPop package. The function BuildViP() combines the three steps. It downloads the data from the HMD and the HFD for a given country and a given year or birth cohort, computes the rates and generates individual life histories. It stores the life histories in a dataframe named dLH by default. If BuildViP() is called from the workspace, the function returns the dataframe dLH in the workspace (global R environment). The following function calls produces a 2-generation virtual population for the United States using mortality rates by age and sex and fertility rates by age and parity. Two generations are used because the time restrictions imposed by CRAN on contributed packages. The use may change ngen to any number. The first generation consists of `r ncohort` people. The function returns the dLH object. Three variants are considered. The first builds a virtual population from period data of 2021 in the presence of mortality. The second excludes mortality. The third builds a virtual population from data of the birth cohort of 1964, augmented by period mortality rates of 2021 to replace the missing cohort data. 
+
+---
+For some countries, e.g. Bulgaria, HMDHFDplus produces 
+an error when reading fertility data (HFD).
+The best response in that case is to download the HFD
+data manually and read the data locally.
+---
+
+The object is saved in folder $pathSave$ as an R data file named $dLH\_USA2021\_5\_1000.RData$.
+
+```{r BuildViP,eval=FALSE}
+# Period data
+dLH <- tryCatch(VirtualPop::BuildViP(user,pw_HMD,pw_HFD,
+                             countrycode="USA",
+                             refyear=2021,
+                             ncohort=1000,
+                             ngen=2),
+                 error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
+
+
+# Specify pathSave, the folder to save dLH. 
+pathSave <- "Name of folder to save dLH"
+fileSave <-paste0("dLH_",attr(dLH,"country"),attr(dLH,"refyear"),"_",
+                  max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]),".rda")
+save(dLH,file=paste0(pathSave,fileSave))
+
+# Period data; no mortality
+dLHnm <- tryCatch(VirtualPop::BuildViP(user,pw_HMD,pw_HFD,
+                             countrycode="USA",
+                             refyear=2021,
+                             ncohort=1000,
+                             ngen=2,
+                             mort=FALSE),
+                                   error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
+
+# Cohort data
+dLHc <- tryCatch(VirtualPop::BuildViP (user,pw_HMD,pw_HFD,
+                          countrycode="USA",
+                          cohort=1964,
+                          ncohort=1000,
+                          ngen=2,
+                          mort=TRUE),
+                                  error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
+
+fileSave <-paste0("dLH_",attr(dLH,"country"),attr(dLH,"refyear"),"_",
+                  max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]))
+save(dLH,file=paste0(pathSave,fileSave))
+```
+
+
+# Download HMD and HFD data
+
+To download the data, you may consider two options. The first is to download the data manually. The second is to download the data programmatically using the package HMDHFDplus. Two types of data are distinguished: period data and cohort data. Period data pertain to calendar years. Cohort data pertain to birth cohorts. 
+
+## Download data manually
+
+Before downloading data, you are requested to provide your email address and password. 
+
+  a. *Period data*
+  
+The URLs of the period data files for the United State are:
 
 * https://www.mortality.org/File/GetDocument/hmd.v6/USA/STATS/fltper_1x1.txt
 * https://www.mortality.org/File/GetDocument/hmd.v6/USA/STATS/mltper_1x1.txt
-* https://www.mortality.org/File/GetDocument/hmd.v6/USA/STATS/Population.txt
 
 and 
 
-* https://www.humanfertility.org/cgi-bin/country.php?country=USA&tab=ft  
+* https://www.humanfertility.org/File/GetDocument/Files/USA/20230328/USAmi.txt
 
 For the fertility data, select "Conditional age-specific fertility rates". 
 
-To read the data, remove the first three lines in $mltper\_1x1.txt$ and $mltper\_1x1.txt$ and the first two lines in $USAmi.txt$ and read the data:
-```{r,eval=FALSE}
-dm <- read.table(paste(path,"mltper_1x1.txt",sep=""))
-df <- read.table(paste(path,"fltper_1x1.txt",sep=""))
-fert_rates <- read.table(paste(path,"USAmi.txt",sep=""))
+Save the data in a folder and record the path, e.g. 
+
+```{r}
+path <- "/users/frans/VirtualPop_data/"
 ```
 
-To save the raw data in a single object, called $data\_raw$,use:
+The function read.table() of the utils package, which is part of base R, imports the data into the R workspace
+
 ```{r,eval=FALSE}
-data_raw <- list (country=country,LTf=df,LTm=dm,fert_rates=fert_rates,dpopHMD=dpopHMD)
-attr(data_raw,"country") <- country
+dm <- utils::read.table(paste0(path,"mltper_1x1.txt"),skip=2,header=TRUE)
+df <- utils::read.table(paste0(path,"fltper_1x1.txt"),skip=2,header=TRUE)
+fert_rates <- utils::read.table(paste0(path,"USAmi.txt"),skip=2,header=TRUE)
 ```
+
+where path is the location of the data. The code removes the first two lines in $mltper\_1x1.txt$, $fltper\_1x1.txt$ and $USAmi.txt$.
+
+The objects dm and df include the period life tables for every year between 1933 and 2021. The object fert_rates includes the conditional fertility rates for every year from 1963 to 2021. 
+
+The ages are character objects. In the HMD, the ages range from 0 to 110+ and in the HFD from 12- and 55+. The ages are character variables. They should be converted to numeric values manually. 
+
+To save the raw data in a single object, called data_raw, use:
+
+```{r echo=FALSE}
+countrycode <- "USA"
+```
+
+
+```{r,eval=FALSE}
+countrycode <- "USA"
+data_raw <- list (country=countrycode,LTf=df,LTm=dm,fert_rates=fert_rates)
+attr(data_raw,"country") <- countrycode
+data_raw <- data_raw
+```
+
 An object attribute is added to identify the country. 
 
-To save the data as an R data file under a name that refers to the country at a desired location, specify the path to the location (folder): 
+To save the data as an R data file under a name that refers to the country, specify the path to the location (folder): 
+
 ```{r,eval=FALSE}
-save (data_raw,file=paste(path,"data_raw",country,".RData",sep="")) 
+path1 <- "Define the path to the folder to save the data locally"
+save (data_raw,file=paste(path1,"data_raw",countrycode,".RData",sep="")) 
 ```
-If the desired location is current working directory, `r path <- ""`.
 
-The USA mortality data are available from 1933 to 2020, the fertility data from 1963 to 2019, and the population data from 1933 to 2021. The data included in $VirtualPop$ are USA data of 2019. 
+If the desired location is current working directory, path is empty ($""$).
 
-## Mortality and fertility rates
+If you are using Rstudio integrated development environment (IDE) and defined a project, the file is saved in the *project directory*. The project directory points to the folder where the $.Rproj$ file is saved, which in Rstudio is called *root folder*. It differs from the *current working directory* displayed by the RStudio IDE within the title region of the Console pane. The function $getwd()$ called from the Rstudio console retrieves the directory listed as the title of the Console pane. The reason for the difference is that R defines an *absolute* file path (set by $setwd()$) and Rstudio defines a *relative* file path. The relative path is not affected by a migration of $.Rproj$ to another location, but the absolute path is. 
 
-The function $Getrates()$ retrieves the fertility and mortality rates from $data_raw$ for the selected reference year. In this tutorial 2019 data are used. 
+  b. *Cohort data*
+
+The URLs of the files for the United States are:
+
+* https://www.mortality.org/File/GetDocument/hmd.v6/USA/STATS/cMx_1x1.txt
+* https://www.humanfertility.org/File/GetDocument/Files/USA/20230328/USAcft.txt
+
+The data set $cMx\_1x1$ contains the cohort mortality rates for males and females for the years 1852 to 1991 and $cft$ has the cohort fertility tables for the birth cohorts 1918 to 1996. The following code reads the data locally.
+
 ```{r,eval=FALSE}
-rates <- VirtualPop::GetRates (data=data_raw,refyear=2019)
+path <- "Define the path to the data on your computer"
+cmortrates <- utils::read.table(paste0(path,"cMx_1x1.txt"),skip=2,header=TRUE)
+cfertTables <- utils::read.table(paste0(path,"cft.txt"),skip=2,header=TRUE)
 ```
-The code chunk is not executed because the chunks in the previous section were not executed. Instead, the object $rates$, which is included ih $VirtualPop$, is taken from the package:
-The data object $rates$, with 2019 rates for the Unites States is included in $VirtualPop$. To load the rates, use
+
+
+## Download data programmatically
+
+Registration with the HMD and HFD is required before downloading data. At registration, you provide a user name (-mail address) and receive a password. They should be stored in the following objects: 
+
 ```{r}
-library (VirtualPop)
-rates <- NULL
-utils::data(rates)
+user <- "your email address"
+pw_HMD <- "password for HMD" ## (password for new (2022) HMD website)
+pw_HFD <- "password for HFD"
 ```
-$rates$ is a list object with three components:
 
-  *  The age-specific death rates by sex ($ASDR$)
-  *  The age-specific fertility rates by birth order ($ASFR$)
-  *  The age-specific fertility rates by birth order in the format required by multistate models ($ratesM$). 
+---
+For some countries, e.g. Bulgaria, HMDHFDplus produces
+an error when reading fertility data (HFD).
+The best response in that case is to download the HFD
+data manually and read the data locally. The issue is 
+expected to be resolved soon.
+---
+
+  a. *Period data*
   
-The third component contains the transition rate matrix by age (matrix $mu(x)$ ), a format required for multistate modelling (see vignette *Simulation of life histories*). The list object has two attributes, country and calendar year. 
+To download data of the United States, use: 
 
-To see the content of $rates$, type $str(rates)$. 
+```{r,eval=FALSE}
+data_raw <- VirtualPop::GetData (country="USA",user,pw_HMD,pw_HFD)
+```
 
-## Generate a virtual population
+The function GetData() uses the functions readHMDweb() and readHFDweb() of the package HMDHFDplus. The code is:
 
-The function $GetGenerations()$ generates a virtual population from death rates by age and sex and fertility rates by age and birth order. The user specifies the population size of the initial cohort ($ncohort$) and the desired number of generations ($ngen$). The simulation of fertility careers accounts for mortality. In the tutorial, the initial cohort is 1,000. A cohort of 10,000 is better to assess the validity of the simulation than a cohort of 1,000, say. In the latter, the effect of random variation is large. 
+
+```{r eval=FALSE}
+df <- HMDHFDplus::readHMDweb(CNTRY=countrycode,item="fltper_1x1",username=user,
+         password=pw_HMD,fixup=TRUE)
+dm <- HMDHFDplus::readHMDweb(CNTRY=countrycode,item="mltper_1x1",username=user,
+        password=pw_HMD,fixup=TRUE)
+fert_rates <- HMDHFDplus::readHFDweb(CNTRY=countrycode,item="mi",username=user,
+        password=pw_HFD,fixup=TRUE)
+```
+
+GetData() returns a list object with five components:
+
+* country: country
+* LTf: period life tables for females ($fltper\_1x1$) for all years for which the data are available (1933 to 2021 in case of the United States).
+* LTm: Life table for males ($mltper\_1x1$).
+* fert_rates: conditional fertility rates ($mi.txt$) for all years for which the data are available (1963 to 2021 in case of the United States).
+
+The ages are character objects. In the HMD, the ages range from 0 to 110+ and in the HFD from 12- and 55+. HMDHFDplus, used by GetData(), has an option to convert the ages to numeric values (fixup=TRUE), which should be used. If the connection with the server that stores the HMD and HFD cannot be made or data are not available for the selected country, the error message "HTTP error 404" is returned.
+
+
+  b. *Cohort data*
+  
+Let's retrieve the cohort mortality rates and the cohort fertility tables rates for the USA. 
+
+```{r eval=FALSE}
+countrycode <- "USA"
+cmrates <- HMDHFDplus::readHMDweb(CNTRY=countrycode,item="cMx_1x1",
+        username=user, password=pw_HMD,fixup=TRUE)
+cfertTables <- HMDHFDplus::readHFDweb(CNTRY=countrycode,item="cft",
+        username=user, password=pw_HFD,fixup=TRUE)
+# List cohorts for which data are downloaded
+cohortsHMD <- unique(cmrates$Year)
+cohortsHFD <- unique(cfertTables$Cohort)
+```
+
+
+# Mortality and fertility rates
+
+
+## Period mortality and fertility rates 
+
+The function GetRates() extract the period rates for a selected reference year from the object $data\_raw$. In this tutorial, the reference year is 2021 and the country is USA.
 
 ```{r}
-dataLH <- VirtualPop::GetGenerations (rates,ncohort=1000,ngen=4) 
+refyear <- 2021
 ```
-The object $dataLH$ includes data on all individuals in the virtual population, including children, grandchildren and great-grandchildren. For each individual in the virtual population, the following data are included:
+
+```{r eval=FALSE}
+rates <- VirtualPop::GetRates(data=data_raw,refyear=refyear)
+```
+
+The following code saves the rates:
+
+```{r eval=FALSE}
+save (rates,file=paste(path,"rates",countrycode,"_",refyear,".RData",sep="")) 
+```
+
+The last code chunks are not executed because the chunks in the previous section were not executed. Instead, the rates are taken from the VirtualPop package, which includes the period rates as a data object. To load the rates, use
+
+```{r}
+utils::data(rates,package="VirtualPop")
+```
+
+where $rates$ is the data object. It is a list object with three components:
+
+  *  ASDR: The age-specific death rates by sex.
+  *  ASFR: The age-specific fertility rates by birth order.
+  *  ratesM: The age-specific fertility rates by birth order in the format required by the multistate model used to simulate the fertility histories. 
+  
+The list object has two attributes; country (USA) and calendar year (2021). 
+ 
+ The third component contains the transition rate matrix by age ([@willekens2014; the VirtualPop package vignette "Simulation of life histories"]. The code to display the vignette is:
+
+```{r eval=FALSE}
+utils::vignette (topic="Multistate",package="VirtualPop")
+```
+
+## Cohort mortality and fertility rates 
+
+The function GetRatesC() retrieves the cohort mortality rates (cMx_1x1) directly from the HMD and extract the cohort fertility tables ($cft$ in HFD) directly from the HFD for a given country and a selected birth cohort. It subsequently extracts the conditional fertility rates from the cohort life table. In this tutorial, the country is USA and the birth cohort 1964. The birth cohort reached the end of the reproductive period (age 55) in 2019. Most cohort members are still alive at age 55. The mortality experience of the cohort is incomplete. To complete the mortality experience of the cohort, period rates of the most recent calendar year (2021) are used. The function GetRatesC() returns the augmented cohort death rates (ASMR) and the conditional fertility rates (ASFR). The function also produces the transition rates for the multistate modelling of fertility histories. 
+
+```{r eval=FALSE}
+ratesC  <- VirtualPop::GetRatesC(country="USA",user,pw_HMD,pw_HFD,refcohort=1964)
+save (rates,file=paste(path,"ratesC",countrycode,"_",refyear,".RData",sep="")) 
+```
+
+The rates for the USA birth cohort 1964 are distributed with the VirtualPop package and may be loaded using: 
+
+```{r}
+utils::data(ratesC,package="VirtualPop")
+```
+
+The object $ratesC$ has five attributes:
+
+  * Country: country (USA)
+  * type: Type of data (cohort)
+  * cohort: Birth cohort (1964)
+  * refyear: calendar year data used to complete the cohort experience. It is the most recent year with period data, in this case 2021. The most recent year with mortality data is selected automatically by GetRatesC(). 
+  * start_pASDR: lowest age with missing age-specific death rates for the selected cohort. Starting at that age, the missing cohort rates are replaced by period rates of the most recent year (2021). The age is determined by GetRatesC(). 
+  
+# Simulate lifespans and fertility histories
+
+The objects rates and ratesC are used to simulate ages at death and fertility histories of members of a virtual population (synthetic cohort). The synthetic cohort consists of 1,000 individuals. The sex ratio at birth is 1.05 males per female. To determine the sex of a cohort member a random number is drawn from a binomial distribution (0 is male and 1 is female). The year of birth of the hypothetical cohort is assumed to be equal to the reference year (2021). The precise dates of birth (decimal dates) of cohort members are obtained by adding to the year random numbers drawn from the standard uniform distribution. In this section lifespans are generated from period mortality rates by age and sex of a the USA in 2021. 
+
+## Lifespans
+
+The methodology is described in the VirtualPop package vignette "Sampling piecewise-exponential waiting time distributions" [see also @willekens2014]. The vignette is retrieved by calling utils::vignette():
+
+```{r eval=FALSE}
+utils::vignette (topic="Piecewise_exponential",package="VirtualPop")
+```
+
+The code to produce individual ages at death is:
+
+```{r}
+ncohort <- 1000
+refyear <- attr(rates,"year")
+sex <- rbinom(ncohort,1,prob=1/2.05)
+sex <- factor (sex,levels=c(0,1),labels=c("Male","Female"),ordered=TRUE)
+## Decimal date of birth
+bdated <- refyear+runif(ncohort)
+dLS <- data.frame(ID=1:ncohort,sex=sex,bdated=bdated)
+dLS <- VirtualPop::Lifespan (data=dLS,ASDR=rates$ASDR)
+```
+
+$dLS$ is a dataframe with one row for each member of the synthetic cohort and one column for each variable. In the absence of mortality, a maximum age (120) is allocated to all individuals. The function call is
+
+```{r}
+dLSnm <- VirtualPop::Lifespan (data=dLS,ASDR=rates$ASDR,mort=FALSE)
+```
+
+The mean and the variability of age at death are computed in the next code chunk. The variability is measured by the standard deviation. The standard deviation is a measures of variability of the age at death [@raalte2012lifespanvariation].
+
+```{r warning=FALSE}
+a <- stats::aggregate(dLS$x_D,by=list(dLS$sex),mean)
+a2 <- stats::aggregate(dLS$x_D,by=list(dLS$sex),median)
+## Lifespan variation: standard deviation of age at death
+b <- stats::aggregate(dLS$x_D,by=list(dLS$sex),sd)
+z <- t(data.frame(mean=round(a$x,2),median=round(a2$x,2),sd=round(b$x,2)))
+colnames(z) <- a[,1]
+out <- knitr::kable(z,format = "simple",
+             caption = "Mean and variability of ages at death, by sex")
+kableExtra::kable_styling(out,latex_options="HOLD_position")
+```
+
+
+
+Figure 1 shows the ages at death of members of the virtual population. 
+
+```{r, fig.align="center", fig.cap=paste0("Simulated ages at death, ",countrycode,", ",refyear), out.width=400,out.extra='angle=0'}
+dLS$x_D[dLS$x_D>110] <- 110
+binwidth <- (max(dLS$x_D,na.rm=TRUE)-min(dLS$x_D,na.rm=TRUE))/60
+require (ggplot2)
+p <- ggplot() +
+  geom_histogram(data=dLS,aes(x=x_D,color=sex,fill=sex,y=after_stat(density)), 
+                 alpha=0.5,position="dodge",binwidth=binwidth) +
+  geom_density(data =dLS,aes(x_D, colour = sex), alpha = .2) 
+p <- p + scale_color_manual(values=c("red", "blue"))
+p <- p + scale_fill_hue(c=45, l=80)
+xmin <- 0
+xmax <- 110
+p <- p + xlab("Age")+ylab("Density")
+p <- p +  scale_x_continuous(breaks=seq(xmin,xmax,by=10)) 
+p <- p + scale_y_continuous (breaks=seq(0,0.04,by=0.005)) 
+p <- p + theme(legend.position = c(0.1, 0.85))
+p
+```
+
+##  Fertility histories with and without death as a competing risk
+
+The function Sim_bio() simulates an individual fertility history from age-specific fertility rates starting at birth and the end of the fertility career. Sim_bio() uses the three-dimensional array rates$ratesM, which contains the fertility rates by parity in the format used in multistate demographic and statistical modelling [@willekens2014, p. 31]. The end of the fertility career is the end of the reproductive period, the age of a competing event that interrupts the fertility career and precludes a new childbirth (e.g. death), or the age at which simulation is terminated (censoring), whichever comes first. The highest age is provided by the user or drawn from a waiting time distribution. The latter is implemented in the Lifespan() function. 
+
+In this section, we first simulate the fertility history of one individual. The simulation of fertility histories of multiple individuals is considered next. The rates used are period rates. Consider individual with ID equal to 1 and assume that the individual is born on 9th May 1999, which is 1999.351 in decimal year^[The lubridate package is used to convert a calendar date to a decimal year: lubridate::decimal_date(lubridate::ymd("1999-05-09"))]. The simulation starts at age 0 and ends at age 85. If the age at death is higher than the end of the reproductive period (age 55), the sequence of births is not affected by the age at death. The individual starts in state par0 (parity 0). 
+
+```{r comment=""}
+set.seed(32)
+popsim <- data.frame(ID=1,born=1999.351,start=0,end=85,st_start="par0")
+ch <- VirtualPop::Sim_bio (datsim=popsim,ratesM=rates$ratesM) 
+paste0("Simulation of single fertility career, ",countrycode,", ",refyear)
+ch
+```
+
+The individual has a first child at age `r round (ch$ages_trans[1],2)`, a second at `r round (ch$ages_trans[2],2)` and a third at `r round (ch$ages_trans[3],2)`. 
+
+In the presence of mortality, the highest age is the end of the reproductive period (age 56) or the age at death, whichever comes first.Let's use Lifespan() to draw a random age at death from the age-at-death distribution of the USA population in 2021.  
+
+```{r comment=""}
+ncohort <- 1 
+sex <- rbinom(ncohort,1,prob=1/2.05)
+sex <- factor (sex,levels=c(0,1),labels=c("Male","Female"),ordered=TRUE)
+dLS <- data.frame(ID=1,sex=sex,bdated=1999.351)
+dLS <- VirtualPop::Lifespan(data=dLS,ASDR=rates$ASDR)
+popsim <- data.frame(ID=1,born=1999.351,start=0,end=dLS$x_D,st_start="par0")
+set.seed(32)
+ch <- VirtualPop::Sim_bio (datsim=popsim,ratesM=rates$ratesM) 
+paste0("Simulation of single fertility career, ",countrycode,", ",refyear)
+ch
+```
+
+Let's now simulate the fertility histories of three women and store the result in a list vector of length three.
+
+```{r}
+n <- 3
+bdated <- c(1999.350,2010.650,2015.340)
+popsim <-data.frame(ID=1:3,born=bdated,start=rep(0,n),end=rep(85,n),
+  st_start=c("par0","par0","par2"))
+ch <- list()
+for (i in 1:n)
+  { ch[[i]] <- VirtualPop::Sim_bio (datsim=popsim[i,],ratesM=rates$ratesM)
+}
+```
+
+The following code snippet generates $r ncohort` (ncohort) fertility histories starting at age 0 and ending at the end of the reproductive period or death. All individuals are born in 2000. The dates of birth are uniformly distributed throughout the year. 
+
+```{r}
+# Create a dataframe with the data for the simulation
+ncohort <- 1000
+bdated <- 2000+runif(ncohort)
+data <- data.frame(ID=1:ncohort,sex=sex,bdated=bdated)
+data <- VirtualPop::Lifespan (data=data,ASDR=rates$ASDR)
+# Generate fertility histories in the presence of mortality
+popsim <-data.frame(ID=1:ncohort,born=bdated,start=rep(0,ncohort),end=data$x_D,st_start=rep("par0",ncohort))
+ch <- list()
+for (i in 1:ncohort)
+  { ch[[i]] <- VirtualPop::Sim_bio (datsim=popsim[i,],ratesM=rates$ratesM)
+}
+```
+
+The mean and median ages at first birth and the standard deviation of the age at first birth are derived from the fertility histories:
+
+```{r comment=""}
+# Age at first birth
+ageFbirth  <- sapply(ch,function(x)
+  { j <- x$ages_trans[1]
+})
+ageFbirth <- ageFbirth [ageFbirth >0]
+## Mean and median ages at first birth
+mean(ageFbirth)
+median(ageFbirth)
+sd(ageFbirth)
+```
+
+Plot the ages at motherhood (Figure 2):
+
+
+```{r, message=FALSE,fig.align="center", fig.cap=paste0("Simulated ages at motherhood, ",countrycode,", ",refyear), out.width=400,out.extra='angle=0'}
+require (ggplot2)
+d <- data.frame(age=ageFbirth)
+p <- ggplot (data=d,aes(age))
+p <- p + geom_histogram(aes(age,after_stat(density)),alpha=0.5,position="identity",bins=50)  
+p <- p + geom_density(alpha=0.2,col="red")
+p
+```
+
+
+
+# Generate a virtual population
+
+The function $GetGenerations()$ generates a virtual population from period or cohort death rates by age and sex and fertility rates by age and parity. It also calls the PartnerSearch() function that creates partnerships. The user specifies the population size of the initial cohort ($ncohort$) and the desired number of generations ($ngen$). The simulation of fertility histories may be with or without mortality. In the tutorial, the initial cohort is `r length(dLH$ID[dLH$gen==1])`. The small cohort size is due to restrictions on processing time imposed by CRAN. Because of the relatively small number, the Monte Carlo variation is high. To test the validity of the simulation, a much larger number is needed. In the vignette on the validity of the simulation, available in the doc folder of the VirtualPop package, a cohort size of 10,000 is used. The first subsection covers the simulation with period data, the second the simulation with cohort data. 
+
+## With period data
+
+The simulation uses mortality and fertility rates stored in the object rates. Suppose the virtual population consists of five overlapping generations. The code is:
+
+```{r echo=FALSE}
+country <- "USA"
+```
+
+```{r}
+ncohort <- 1000
+dLH <- GetGenerations (rates,ncohort=ncohort,ngen=5) 
+```
+
+The object $dLH$ includes data on all individuals in the virtual population, including children (generation 2), grandchildren (generation 3), great-grandchildren (generation 4) and great-great-grandchildren (generation 5). The structure of the object $dLH$ is described in Appendix A. Note that the mothers and fathers of individuals in generation 1, which is the initial population, are unknown because they are not part of the virtual population. For members of the last (fifth) generation, the number of children is known? The IDs of the children (generation 6), their birth order and their dates of birth and death are also simulated, but information on their fertility career is missing.  
+
+The object $dLH$ represents the main result of the VirtualPop package. One version of a $dLH$ object is included in the VirtualPop package for easy reference. It is the virtual population generated from the mortality and fertility rates of the United States for `r refyear` and an initial cohort of `r ncohort`. The virtual population consists of `r nrow(dLH)` individuals, including the children of members of the fifth generation. To load the data, use
+
+
+```{r getdLH}
+utils::data(dLH,package="VirtualPop")
+```
+
+It is good practice to save $dLH$ as an R data file in a designated folder:
+
+
+```{r,eval=FALSE}
+path <- paste0("Folder to save the virtual population (dLH).",
+             "To be defined by the user.")
+ngen <- max(dLH$gen)-1
+save (dLH,file=paste0(path,"dLH_",countrycode,"_",refyear,"_",ngen,"_",".RData")) 
+```
+
+If path=NULL, the data are saved in the current working directory. To retrieve the data, use
+
+```{r, eval=FALSE}
+load(file=paste0(path,"dLH_",countrycode,"_",refyear,"_",ngen,"_",".RData")) 
+```
+
+The name of the retrieved object is $dLH$. 
+
+Table 3 shows, for each generation, the population size by sex, the number of couples, the range of the IDs of members of a generation, and the period of birth.
+
+```{r tab1,echo=FALSE}
+country <- "the United States of America"
+countrycode <- "USA"
+refyear <- 2021
+ncohort <- length(dLH$ID[dLH$gen==1])
+ngen <- max(dLH$gen)
+z <-  as.data.frame.matrix(table (Gen=dLH$gen,
+                                  Gender=dLH$sex),rownames.force=TRUE)
+tab <- data.frame(Gen=1:ngen,z)
+tab$Total <- apply(tab[,-1],1,sum)
+```
+
+## With cohort data
+
+The following code generates the virtual population with cohort data (USA, 1964 cohort): 
+
+```{r}
+dLHc <- VirtualPop::GetGenerations (rates=ratesC,ncohort=1000,ngen=5) 
+```
+
+```{r,eval=FALSE}
+refyear <- attr(dLHc,"refyear")
+cohort <- attr(dLHc,"cohort")
+save (dLHc,file=paste0(path,"dLHc_",countrycode=countrycode,"_",
+                       cohort,"_",refyear,".rda"))
+```
+
+The object dLHc has four attributes: country (USA), type of data (cohort), birth cohort (1964) and reference year (2021). 
+
+Table 4 shows, for each generation, the population size by sex, the number of couples, the range of the IDs of members of a generation, and the period of birth.
+
+```{r echo=FALSE}
+dLH <- dLHc
+refyear <- attr(dLHc,"refyear")
+cohort <- attr(dLHc,"cohort")
+ncohort <- length(dLH$ID[dLH$gen==1])
+ngen <- max(dLH$gen)-1
+z <-  as.data.frame.matrix(table (Gen=dLH$gen,
+                                  Gender=dLH$sex),rownames.force=TRUE)
+tab <- data.frame(Gen=1:(ngen+1),z)
+tab$Total <- apply(tab[,-1],1,sum)
+# Get number of couples
+tab$Couples <- c(as.vector(table (dLH$gen[!is.na(dLH$IDpartner)]))/2,NA)
+tab <- rbind(tab,apply(tab,2,function(x) sum(x,na.rm=TRUE)))
+tab[ngen+2,1] <- "Total"
+ee <- data.frame(From=rep(NA,(ngen+1),To=rep(NA,(ngen+1))))
+for (j in 1:(ngen+1))
+   {ee[j,1] <- format(lubridate::date_decimal(min(dLH$bdated[dLH$gen%in%c(j)])),
+                    "%d-%m-%Y")
+    ee[j,2] <- format(lubridate::date_decimal(max(dLH$bdated[dLH$gen%in%c(j)])),
+                    "%d-%m-%Y")
+  }    
+z1 <- t(sapply(1:max(dLH$gen),function(x) c(min(dLH$ID[dLH$gen==x]),max(dLH$ID[dLH$gen==x]))))
+colnames(z1) <-c("From","To")
+tab$ID <- rbind(z1,c(1,max(z1)))
+tab$Bdate <- cbind(From=c(ee[,1],ee[1,1]),To=c(ee[,2],ee[ngen,2]))
+tabc <- do.call(data.frame, tab)
+
+# Display table
+out <- knitr::kable(tabc, align=rep("r",5),
+             caption = paste0(" Virtual population ",countrycode,
+                              " based on cohort rates (cohort ",cohort,")"),
+  format = 'latex', booktabs = T,linesep = "")
+kableExtra::kable_styling(out,latex_options="HOLD_position")
+```
+
+
+
+
+# Appendix A. The life histories data (dLH) object{-}
+
+
+The dataframe dLH contains the life histories of all individuals in the initial birth cohort and their descendants. The dataframe has one record for each individual who was ever alive during the simulation. Individual attributes and event dates are stored in the columns. The dataframe dLH has the following columns:
 
 *  Identification number ($ID$)
 *  Generation to which the individual belongs ($gen$)
+*  Initial cohort ($Cohort$)
 *  Sex ($sex$)
-*  Decimal date of birth ($bdated$). A decimal date is a decimal representation of a date. It gives the calendar year and the fraction of the year. See vignette *Sampling Piecewise-Exponential Waiting Time Distributions*
+*  Decimal date of birth ($bdated$). A decimal date is a decimal representation of a date. It gives the calendar year and the fraction of the year. See vignette "Sampling Piecewise-Exponential Waiting Time Distributions".  
 *  Decimal date of death ($ddated$)
 *  Age at death ($x\_D$)
 *  ID of the partner ($IDpartner$). Since the number of males and females may not be exactly equal in the virtual population, some individuals remain without a partner. 
 *  ID of the mother ($IDmother$). The ID is given when the mother of the individual is a member of the virtual population. 
 *  ID of the father ($IDfather$). The ID of the father is the ID of the partner of the mother. 
 *  Birth order or line number of the child ($jch$). This variable is given when the mother of the individual is a member of the virtual population. 
-*  Number of children ever born to the individual listed in the record ($nch$). The value is entered after running the function $Children()$. 
-*  IDs of children of the individual the ID of which is given in the record, with a maximum of 9 children (id.1 ... id.9). 
-*  Ages of mother at birth of children (age.1 ... age.9).
+*  Number of children ever born to the individual with identification number ID ($nch$). The number of children is missing for males. Their children are the children of their partner. 
 
-Note that the mothers and fathers of individuals in generation 1, which is the initial population, are omitted since they are not part of the virtual population. 
 
-The object $dataLH$ represents the main result of the $VirtualPop$ package. The package $VirtualPop$ includes data of the virtual population generated from the mortality and fertility rates of the United States for 2019 and an initial cohort of 10,000. The virtual population consists of 29,954 individuals. To load the data, use
-```{r}
-utils::data(dataLH)
+Note that the mothers and fathers of members of the initial cohort (generation 1) are omitted since they are not part of the virtual population. Table 5 shows the records of five individuals, selected at random:
+
+```{r comment=NA,echo=FALSE}
+set.seed(44)
+kk <- c(sample(dLH$ID[dLH$sex=="Female"],3),sample(dLH$ID[dLH$sex=="Male"],1))
+df <- dLH[dLH$ID%in%kk,]
+df <- df[,1:13]
+knitr::kable(t(df), caption = "The dLH fataframe",
+         format="latex",booktabs=TRUE,linesep = "")
 ```
-It is good practice to save the virtual population as an R data file:
-```{r,eval=FALSE}
-save (dataLH,file=paste(path,"dataLH",country,".RData",sep="")) 
-```
-The data are saved in the current working directory under the name $dataLHUSA.RData$. To retrieve the data, use
-```{r, eval=FALSE}
-load(file=paste(path,"dataLH",country,".RData",sep=""))
-```
-The name of the retrieved object is $dataLH$. 
 
+Table 3 of the main text shows the size of each generation. The number of birth in the first generation is fixed, the sizes of other generations depend on fertility (and mortality) of the previous generations. 
 
-### Replace age at death by age at censoring
-
-To remove the effect of mortality on the fertility career, ages at death are set at ages beyond the reproductive career, e.g. 85. The user may change the value variable $x\_D$ in $dataLH$ manually or by specifying the argument $iages$ in the $GetGenerations()$ function:
+Decimal dates may be converted into calendar dates. CRAN has several packages with functions to perform operations on dates. The package lubridate is one of them. It is part of the tidyverse collection of R packages. The date\_decimal() function of the lubridate package converts a decimal date into a calendar date. R’s format function is used to obtain a calendar date in the desired format. The following code converts the decimal date 2020.409 into calendar date:
 
 ```{r}
-ncohort <- 1000
-dLH_nomort <- VirtualPop::GetGenerations (rates,ncohort=ncohort,ngen=4,iage=85)
-```
-Death interrupts the fertility career. Other modes of interruption or censoring may be considered. The age at censoring may differ for each individual. For instance, to assess the validity of the simulation and to compare fertility indicators of the virtual population with those of a real population, the simulation window must coincide with the observation window (see vignette *Validity of the simulation*). Suppose the fertility indicators of a real population are obtained from data collected in a retrospective life-history survey of a cross-section of a population. At survey date (and censoring of the observation), individuals in the sample survey have different ages. To assess the validity of the simulation, the ages at censoring in the sample survey should be imposed onto the virtual population. To impose the age structure of the sample population onto the virtual population, the argument $age\_end\_perc$ of the $GetGenerations()$ function is specified. The argument is an age distribution (single years of age, by sex). Is the argument specified, then $GetGenerations()$ assigns to each individual in the virtual population an age at censoring such that the age distribution at censoring in the virtual population is the same as the age distribution at censoring in the sample survey. Mortality is disregarded because respondents interviewed at survey date are survivors. Consider the age distribution of the female population in the United States in 2019 reported in the HMD ($Population.txt$ file):
-
-```{r,eval=FALSE}
-dpopus <- dpopHMD[dpopHMD$Year==2019,c("Female1","Male1")]
-dimnames(dpopus) <- list (Age=0:110,Sex=c("Females","Males"))
-```
-The code chunk requires dpopHMD, which is downloaded from the HMD. The code is not executed. Instead, the data object $dpopus$, which is distributed with %VirtualPop$, is used:
-```{r}
-utils::data(dpopus)
+date <- format(lubridate::date_decimal(2020.409), "%d %B %Y")
 ```
 
-The age distribution of the population 15+ is
-```{r, results="hide"}
-data(dpopus)
-z <- dpopus[16:nrow(dpopus),]
-age_end_perc <- apply(z,2,function(x) x/sum(x))
-```
+The calendar date is `r date`. For a discussion of dates in demographic research, see @willekens2013chronological.
 
-To simulate the past fertility careers of a population with the ages structure of the female population (15+) of the United States in 2019, use
+
+# Appendix B. Export the virtual population from R to STATA and SPSS{-}
+
+The virtual population generated by $GetGenerations()$ is stored in the $dLH$ data frame. The data may be exported from R to a STATA or SPSS binary data format, using the package foreign, and saved at a desired location:
 
 ```{r, eval=FALSE}
-xx <- VirtualPop::GetGenerations (rates,ncohort=1000,ngen=1,age_end_perc =age_end_perc)
-# Age distribution of the virtual population at censoring time
-n <- table (trunc(xx$x_D),xx$sex)
-nperc <- apply(n,2,function(x) x/sum(x))
-age_end_perc <- NULL
-```
-
-In the function $Children()$, called by $GetGenerations()$, an individual's age at censoring is transmitted to the function $Sim\_bio()$ as part of the argument $popsim$ (see the vignette *Simulation of life histories*).
-
-### Export the virtual population from R to STATA and SPSS
-
-The virtual population generated by $GetGenerations()$ is stored in a data frame, which is a rectangular data structure. The data frame may be exported from R to a STATA or SPSS binary data format and saved at a desired location:
-
-```{r, eval=FALSE}
-library(foreign)
 path <- "" # or different path
-foreign::write.dta(dataLH, paste (path,"dataLH.dta",sep=""))
+foreign::write.dta(dLH, paste (path,"dLH.dta",sep=""))
 ```
 
 with $path$ the path of the directory in which the STATA file should be located. It the path is omitted, the file is saved in the working directory. The results of the simulation may also be saved as an SPSS file:
 
 ```{r, eval=FALSE}
-foreign::write.foreign(dataLH,
-        paste (path,"dataLH.txt",sep=""),
-        paste (path,"dataLH.sps",sep=""), package="SPSS")
+foreign::write.foreign(dLH,
+        paste (path,"dLH.txt",sep=""),
+        paste (path,"dLH.sps",sep=""), package="SPSS")
 ```
 
-The function creates a text file and an SPSS program to read it. The functions $write.dta$ and $write.foreign$ are functions of the package $foreign$. An alternative is to use the $write\_tda$ and $write\_sav$ functions of the haven package, which is part of the tidyverse collection of R packages. 
+The function creates a text file and an SPSS program to read it. The functions write.dta() and write.foreign() are functions of the package foreign. An alternative is to use the write\_tda() and write\_sav() functions of the haven package, which is part of the tidyverse collection of R packages. 
 
-### Convert decimal dates into calendar dates
 
-Note that decimal dates can be converted quite easily to calendar date format. The Comprehensive R Archive Network (CRAN) has several packages with functions to perform operations on dates. The package *lubridate* is one of them. It is part of the *tidyverse* collection of R packages. The $date\_decimal$ function of the *lubridate* package converts a decimal date into a calendar date. R’s format function is used to obtain a calendar date in a desired format. The call function is 
 
-```{r}
-format(lubridate::date_decimal(2019.409), "%Y-%m-%d")
-```
-
-The calendar date is May 30th 2019. For a discussion of dates in demographic research, see @willekens2013chronological.
-
-### Additional application: fertility careers in Japan
-
-To illustrate how easy it is to generate a virtual population for another country or another year, the mortality rates and fertility rates of Japan are used. The mortality rates are available from 1947 to 2020 and the conditional fertility rates from 1998 to 2020. In the application, data for three years are used. In the virtual population, 1,000 individuals experience the mortality and conditional fertility rates of 1998, 1,000 the rates of 2010 and 1,000 the rates of 2020. The code is (requires user name and password): 
-
-```{r,eval=FALSE,warning=FALSE,message=FALSE}
-country <- "JPN"
-refyear2 <- c(1998,2010,2020)
-ncohort <- 1000
-dLH_Japan <-  NULL
-df <- HMDHFDplus::readHMDweb(CNTRY=country,item="fltper_1x1",username=user,password=pw_HMD,fixup=TRUE)
-dm <- HMDHFDplus::readHMDweb(CNTRY=country,item="mltper_1x1",username=user,password=pw_HMD,fixup=TRUE)
-fert_rates <- HMDHFDplus::readHFDweb(CNTRY=country,item="mi",username=user,password=pw_HFD,fixup=TRUE)
-data_raw <- list (country=country,LTf=df,LTm=dm,fert_rates=fert_rates)
-attr(data_raw,"country") <- country
-for (iy in 1:3)
-{  rates <- VirtualPop::GetRates (data=data_raw,refyear=refyear2[iy])
-   dJapan <- VirtualPop::GetGenerations (rates,ncohort=ncohort,ngen=4) 
-   if (iy >1) ID1 <- dLH_Japan + 1
-   dLH_Japan <-  rbind (dLH_Japan,dJapan)
-}
-```
-The initial population (generation 1) consists of 3,000 individuals. The sex composition, by year of birth, is 
-
-```{r, eval=FALSE}
-z <- addmargins (table (dLH_Japan$sex[dLH_Japan$gen==1],trunc(dLH_Japan$bdated)[dLH_Japan$gen==1]))
-z
-```
-The numbers of children, grandchildren and great-grandchildren, provided the fertility and mortality regimes of Japan in a reference year apply to all virtual individuals born in that reference year and their offspring, are:
-```{r, eval=FALSE}
-# Children
-sum(dLH_Japan$nch[dLH_Japan$gen==1 & dLH_Japan$sex=="Female"]
-# Grandchildren
-sum(dLH_Japan$nch[dLH_Japan$gen==2 & dLH_Japan$sex=="Female"])
-# Great-grandchildren
-sum(dLH_Japan$nch[dLH_Japan$gen==3 & dLH_Japan$sex=="Female"])
-```
-
-The virtual population facilitates the analysis of grandparenthood, families and kinship networks. 
-
-## References
+# References{-}
 
 
 

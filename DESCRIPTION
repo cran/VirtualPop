@@ -1,27 +1,29 @@
 Package: VirtualPop
 Type: Package
 Title: Simulation of Populations by Sampling Waiting-Time Distributions
-Version: 1.0.2
+Version: 2.0.2
 Imports: msm,HMDHFDplus
-Suggests: knitr, rmarkdown,ggplot2,foreign,lubridate,xml2,remotes
+Suggests: knitr, kableExtra, ggplot2, foreign, lubridate, xml2, eha,
+        survival, survminer, rmarkdown
 BuildResaveData: best
 VignetteBuilder: knitr
 LazyData: true
-Date: 2022-06-23
-Authors@R: c(person("Frans", "Willekens", , "willekens@nidi.nl", role = c("aut", "cre"),
+Date: 2024-03-18
+Authors@R: c(person("Frans", "Willekens", role = c("aut", "cre"),email="willekens@nidi.nl",
            comment = c(ORCID = "0000-0001-6125-0212")),
    	   person("Tim", "Riffe", role = "ctb", 
            email = "tim.riffe@gmail.com", comment = c(ORCID = "0000-0002-2673-4622")))
 Maintainer: Frans Willekens <willekens@nidi.nl>
-Description: Generates lifespans and fertility histories in continuous time using individual-level state transition (multi-state) models and data from the Human Mortality Database and the Human Fertility Database. To facilitate virtual population analysis, data on virtual individuals are stored in a data structure commonly used in sample surveys. Life histories are generated for multiple generations. The genealogies that result facilitate the study of family ties. 
+Description: Constructs a virtual population from fertility and mortality rates for any country,
+	calendar year and birth cohort in the Human Mortality Database <https://www.mortality.org> and the Human Fertility Database <https://www.humanfertility.org>.  Fertility histories are simulated for every individual and their offspring, producing a multi-generation virtual population. 
 License: GPL-2
 NeedsCompilation: no
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.3.0),
 Encoding: UTF-8
 BugReports: https://github.com/willekens/VirtualPop/issues
-RoxygenNote: 7.2.0
-Packaged: 2022-06-23 12:06:22 UTC; frans
+RoxygenNote: 7.2.3
+Packaged: 2024-03-18 10:04:52 UTC; frans
 Author: Frans Willekens [aut, cre] (<https://orcid.org/0000-0001-6125-0212>),
   Tim Riffe [ctb] (<https://orcid.org/0000-0002-2673-4622>)
 Repository: CRAN
-Date/Publication: 2022-06-23 18:10:15 UTC
+Date/Publication: 2024-03-18 10:30:02 UTC

@@ -7,7 +7,9 @@
 Sim_bio(datsim, ratesM)
 }
 \arguments{
-\item{datsim}{Data frame with individual data}
+\item{datsim}{Dataframe with, for each individual, ID, date of birth, starting 
+and ending times (ages) of the simulation, and the state occupied at the start 
+of the simulation (see vignette "Tutorial").}
 
 \item{ratesM}{Multistate transition rates in standard (multistate) format}
 }
@@ -18,21 +20,19 @@ Sim_bio(datsim, ratesM)
 transition}
 }
 \description{
-The function is called from the function Children. It uses the rpexp
-function of the msm package.
+The function generates a single life history from age-specific transition rates (rates$ratesM) and an initial state. 
+RatesM is an object with the rates in the proper format for multistate modelling. The user supplies the 
+starting age and ending age of the simulation.
+}
+\details{
+The function is called from the function VirtualPop::Children(). It uses the rpexp() function of the msm package.
 }
 \examples{
 
-  # Generates single fertility history from mortality rates by age 
-  # and fertility rates by age and parity
   # Fertily history is simulated from starting age to ending age
   # Individual starts in state "par0"
-  # ratesM is an object with the rates in the proper format for multistate analysis
-  utils::data(rates)
+  utils::data(rates,package="VirtualPop")
   popsim <- data.frame(ID=1,born=2000.450,start=0,end=80,st_start="par0")
-  ch <- Sim_bio (datsim=popsim,ratesM=rates$ratesM) 
+  ch <- VirtualPop::Sim_bio (datsim=popsim,ratesM=rates$ratesM) 
 
-}
-\author{
-Frans Willekens
 }
