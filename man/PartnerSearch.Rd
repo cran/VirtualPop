@@ -4,22 +4,25 @@
 \alias{PartnerSearch}
 \title{Simple Partner Search Simulation}
 \usage{
-PartnerSearch(dLH)
+PartnerSearch(idego, d)
 }
 \arguments{
-\item{dLH}{Database}
+\item{idego}{IDs of egos in search for partner}
+
+\item{d}{Database (eg dLH)}
 }
 \value{
-\item{dLH}{Updated version of database (dLH), which includes, for each individual 
+\item{d}{Updated version of database (d), which includes, for each individual 
 without a partner and able to find a partner, the ID of the partner.}
+\item{dp}{Data related to partner search (dataframe)}
 }
 \description{
-In this simple model, a partner is an individual of a different sex selected at random among members of the same generation.
+In this updated partner search model, a partner is an individual of a different sex selected 
+at random among members of the same generation.
 The function is called by GetGenerations().
 }
 \examples{
-
 utils::data(dLH,package="VirtualPop")
-d <- VirtualPop::PartnerSearch(dLH=dLH)
+dp <- VirtualPop::PartnerSearch(idego=dLH$ID,d=dLH)
 
 }

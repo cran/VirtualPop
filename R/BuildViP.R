@@ -52,7 +52,7 @@ BuildViP <- function (user=NULL,pw_HMD=NULL,pw_HFD=NULL,
     yearsHMD <- unique(data_raw$LTf$Year)
     yearsHFD <- unique(data_raw$fert_rates$Year)
     refyear0 <- min(max(yearsHMD),max(yearsHFD))
-    if (exists("refyear") & refyear>refyear0) refyear <- refyear0
+    if (exists("refyear") & !is.null(refyear) & refyear>refyear0) refyear <- refyear0
     fert_rates <- HMDHFDplus::readHFDweb(CNTRY=countrycode,item="mi",
                     username=user,password=pw_HFD,fixup=TRUE)
     data_raw$fert_rates <- fert_rates
@@ -63,9 +63,15 @@ BuildViP <- function (user=NULL,pw_HMD=NULL,pw_HFD=NULL,
                      user,pw_HMD,pw_HFD,refcohort=cohort)
      } else stop("Check arguments cohort and refyear of BuildViP()")
    }
-
+  message ("Reading HMD and HFD data completed. Rates computed")
+  
   # Generate an ngen-generation virtual population 
   #      using period rates of USA in reference year
-  dLH <- VirtualPop::GetGenerations (rates,ncohort=ncohort,ngen=ngen,mort)
+  dLH <- VirtualPop::GetGenerations (rates,ncohort=ncohort,ngen=ngen,mort) 
+  
+  # Complete nch for males 
+  z <- dLH$nch[match(dLH$IDpartner,dLH$ID)]
+  dLH$nch[dLH$sex=="Male"] <- z[dLH$sex=="Male"]
+  
   return(dLH)
 }

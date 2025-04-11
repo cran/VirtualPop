@@ -54,6 +54,13 @@ registerS3method(
 
 \newpage
 
+
+```{r echo=FALSE}
+user <- "willekens@nidi.nl"
+pw_HMD <- "B20@p80"
+pw_HFD <-  "Paris#900"
+```
+
 # Introduction
 
 VirtualPop constructs a virtual populations from fertility and mortality rates for any country, calendar year (period data) and birth cohort (cohort data) in the [Human Mortality Database (HMD)](https://www.mortality.org) and the [Human Fertility Database (HFD)](https://www.humanfertility.org). Cohort data refer to a birth cohort, e.g. individuals born in 1964. Period data refer to data collected in a given calendar year, e.g. 2021. VirtualPop constructs a virtual population in three steps. In the first step, VirtualPop retrieves data programmatically from the HMD and the HFD. The retrieved data are for a country specified by the user. The retrieved data have the necessary mortality and fertility rates, but they may have other data too. In the second step, the mortality and fertility rates are extracted for the selected birth cohort (cohort data) or calendar year (period data). In the third step, *lifespans* and *fertility histories* are generated for all individuals in the virtual population and their offspring. The population that results has multiple generations, which offers the opportunity to study kinship networks and other subject that involve multiple generations and that are not feasible in real populations due to lack of data or for other reasons.
@@ -145,7 +152,7 @@ data(package="VirtualPop")
 
 
 
-## HMDHFDplus Version 2.0.3
+## HMDHFDplus Version 2.0.6
 
 The data in the HMD and HFD are provided free of charge to registered users.  At registration, basic contact information is obtained (i.e., name, e-mail address, affiliation, and title). To register, go to https://www.mortality.org and https://www.humanfertility.org . Upon acceptance of the agreement, you receive a password. The user name (e-mail address used at registration) and the password are required to download data. In this tutorial, it is assumed that you use the same e-mail address to register with the HMD and the HFD. If you registered before mid-2022, note that in 2022 HMD users were requested to re-register. 
 
@@ -153,7 +160,7 @@ The HMDHFDplus package was developed by Tim Riffe and colleagues at the Max Plan
 
 ```{r eval=FALSE}
 library (HMDHFDplus)
-version <- packageVersion("HMDHFDplus") # 2.0.3
+version <- packageVersion("HMDHFDplus") # 2.0.6
 ```
 
 ## Other packages used by VirtualPop
@@ -196,19 +203,15 @@ The object is saved in folder $pathSave$ as an R data file named $dLH\_USA2021\_
 
 ```{r BuildViP,eval=FALSE}
 # Period data
+a <- Sys.time()
 dLH <- tryCatch(VirtualPop::BuildViP(user,pw_HMD,pw_HFD,
                              countrycode="USA",
                              refyear=2021,
-                             ncohort=1000,
-                             ngen=2),
+                             ncohort=5000,
+                             ngen=5),
                  error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
-
-
-# Specify pathSave, the folder to save dLH. 
-pathSave <- "Name of folder to save dLH"
-fileSave <-paste0("dLH_",attr(dLH,"country"),attr(dLH,"refyear"),"_",
-                  max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]),".rda")
-save(dLH,file=paste0(pathSave,fileSave))
+b <- Sys.time()
+b-a
 
 # Period data; no mortality
 dLHnm <- tryCatch(VirtualPop::BuildViP(user,pw_HMD,pw_HFD,
@@ -224,12 +227,16 @@ dLHc <- tryCatch(VirtualPop::BuildViP (user,pw_HMD,pw_HFD,
                           countrycode="USA",
                           cohort=1964,
                           ncohort=1000,
-                          ngen=2,
+                          ngen=5,
                           mort=TRUE),
                                   error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
 
+# Specify pathSave, the folder to save dLH. 
+pathSave <- "Name of folder to save dLH"
+pathSave <- "/Users/frans/VirtualPop_data/"
 fileSave <-paste0("dLH_",attr(dLH,"country"),attr(dLH,"refyear"),"_",
-                  max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]))
+                  max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]),".RData")
+# or paste0("dLHc_".....   or  paste0("dLHnm_"..... 
 save(dLH,file=paste0(pathSave,fileSave))
 ```
 
@@ -510,7 +517,7 @@ xmax <- 110
 p <- p + xlab("Age")+ylab("Density")
 p <- p +  scale_x_continuous(breaks=seq(xmin,xmax,by=10)) 
 p <- p + scale_y_continuous (breaks=seq(0,0.04,by=0.005)) 
-p <- p + theme(legend.position = c(0.1, 0.85))
+p <- p + theme(legend.position = "inside",legend.position.inside = c(0.1, 0.8))
 p
 ```
 

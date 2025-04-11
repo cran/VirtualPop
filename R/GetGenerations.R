@@ -80,11 +80,13 @@ dataMF <- data
 # Create object with life histories of children of initial pop
 dataAllgen <- NULL
 for (igen in 1:ngen)
- { dataMF2 <- VirtualPop::PartnerSearch (dLH=dataMF)
-   datach <- VirtualPop::Children (dat0=dataMF2,rates,mort=mort)
+ { dataMF2 <- VirtualPop::PartnerSearch (idego=dataMF$ID,d=dataMF)
+   datach <- VirtualPop::Children (dat0=dataMF2$d,rates,mort=mort)
+   datach$dch$IDfather <- dataMF2$d$IDpartner[match(datach$dch$IDmother,dataMF2$d$ID)]
    dataMF <- datach$dch
    dataAllgen <- rbind (dataAllgen,datach$data)
 }   
+#    IDpartner(3,d=dataAllgen)
 # Add info on children of women of generation ngen (=> is generation ngen+1)
 dataAllgen <- rbind (dataAllgen,datach$dch)
 

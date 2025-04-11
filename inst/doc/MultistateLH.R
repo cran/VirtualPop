@@ -87,7 +87,7 @@ d$x_D[d$sex=="Female"] <- msm::rpexp(n=nfemales,rate=rates$ASDR[,"Females"],
 d$ddated <- d$bdated+d$x_D
 
 ## ----results="hide"-----------------------------------------------------------
-d <- VirtualPop::PartnerSearch(dLH=d)
+d <- VirtualPop::PartnerSearch(idego=d$ID,d=d)
 
 ## -----------------------------------------------------------------------------
 out <- knitr::kable(head(d),
@@ -96,7 +96,7 @@ out <- knitr::kable(head(d),
 kableExtra::kable_styling(out,latex_options=c("scale_down", "HOLD_position"))
 
 ## ----warning=FALSE------------------------------------------------------------
-dch1 <- VirtualPop::Children(dat0=d,rates=rates)
+dch1 <- VirtualPop::Children(dat0=d$d,rates=rates)
 
 ## -----------------------------------------------------------------------------
 dch1$dch$IDfather <- dch1$data$IDpartner[dch1$dch$IDmother]
@@ -108,16 +108,16 @@ out <- knitr::kable(head(dch1$dch),
 kableExtra::kable_styling(out,latex_options=c("scale_down","HOLD_position"))
 
 ## ----results="hide"-----------------------------------------------------------
-d2 <- VirtualPop::PartnerSearch (dLH=dch1$dch)
+d2 <- VirtualPop::PartnerSearch (idego=dch1$dch$ID,d=dch1$dch)
 
 ## ----warning=FALSE------------------------------------------------------------
-dch2 <-  VirtualPop::Children(dat0=d2,rates=rates)
+dch2 <-  VirtualPop::Children(dat0=d2$d,rates=rates)
 
 ## ----results="hide",warning=FALSE---------------------------------------------
-d3 <- VirtualPop::PartnerSearch (dLH=dch2$dch)
-dch3 <-  VirtualPop::Children(dat0=d3,rates=rates)
-d4 <- VirtualPop::PartnerSearch (dLH=dch3$dch)
-dch4 <-  VirtualPop::Children(dat0=d4,rates=rates)
+d3 <- VirtualPop::PartnerSearch (idego=dch2$dch$ID,d=dch2$dch)
+dch3 <-  VirtualPop::Children(dat0=d3$d,rates=rates)
+d4 <- VirtualPop::PartnerSearch (idego=dch3$dch$ID,d=dch3$dch)
+dch4 <-  VirtualPop::Children(dat0=d4$d,rates=rates)
 d4 <- dch4$data[,1:which (colnames(dch4$data)=="nch")]
 
 ## -----------------------------------------------------------------------------

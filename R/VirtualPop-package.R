@@ -81,5 +81,5 @@ NULL
 #' Mortality Database (HMD) and the Human Fertility Database (HFD). 
 NULL
 
-#' @importFrom stats aggregate rbinom runif uniroot
+#' @importFrom stats aggregate rbinom runif uniroot rnorm sd
 NULL

@@ -1,14 +1,14 @@
 Package: VirtualPop
 Type: Package
 Title: Simulation of Populations by Sampling Waiting-Time Distributions
-Version: 2.0.2
+Version: 2.1.0
 Imports: msm,HMDHFDplus
 Suggests: knitr, kableExtra, ggplot2, foreign, lubridate, xml2, eha,
         survival, survminer, rmarkdown
 BuildResaveData: best
 VignetteBuilder: knitr
 LazyData: true
-Date: 2024-03-18
+Date: 2025-04-11
 Authors@R: c(person("Frans", "Willekens", role = c("aut", "cre"),email="willekens@nidi.nl",
            comment = c(ORCID = "0000-0001-6125-0212")),
    	   person("Tim", "Riffe", role = "ctb", 
@@ -21,9 +21,9 @@ NeedsCompilation: no
 Depends: R (>= 4.3.0),
 Encoding: UTF-8
 BugReports: https://github.com/willekens/VirtualPop/issues
-RoxygenNote: 7.2.3
-Packaged: 2024-03-18 10:04:52 UTC; frans
+RoxygenNote: 7.3.2
+Packaged: 2025-04-11 19:49:55 UTC; frans
 Author: Frans Willekens [aut, cre] (<https://orcid.org/0000-0001-6125-0212>),
   Tim Riffe [ctb] (<https://orcid.org/0000-0002-2673-4622>)
 Repository: CRAN
-Date/Publication: 2024-03-18 10:30:02 UTC
+Date/Publication: 2025-04-11 22:00:15 UTC

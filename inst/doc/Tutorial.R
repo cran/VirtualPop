@@ -17,6 +17,11 @@ registerS3method(
   envir = asNamespace("knitr")
 )
 
+## ----echo=FALSE---------------------------------------------------------------
+user <- "willekens@nidi.nl"
+pw_HMD <- "B20@p80"
+pw_HFD <-  "Paris#900"
+
 ## -----------------------------------------------------------------------------
 countriesHMD <- HMDHFDplus::getHMDcountries()
 countriesHFD <- HMDHFDplus::getHFDcountries()
@@ -39,7 +44,7 @@ library (VirtualPop)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  library (HMDHFDplus)
-#  version <- packageVersion("HMDHFDplus") # 2.0.3
+#  version <- packageVersion("HMDHFDplus") # 2.0.6
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  tools::package_dependencies(recursive = TRUE)$VirtualPop
@@ -50,19 +55,15 @@ ncohort <- length(dLH$ID[dLH$gen==1])
 
 ## ----BuildViP,eval=FALSE------------------------------------------------------
 #  # Period data
+#  a <- Sys.time()
 #  dLH <- tryCatch(VirtualPop::BuildViP(user,pw_HMD,pw_HFD,
 #                               countrycode="USA",
 #                               refyear=2021,
-#                               ncohort=1000,
-#                               ngen=2),
+#                               ncohort=5000,
+#                               ngen=5),
 #                   error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
-#  
-#  
-#  # Specify pathSave, the folder to save dLH.
-#  pathSave <- "Name of folder to save dLH"
-#  fileSave <-paste0("dLH_",attr(dLH,"country"),attr(dLH,"refyear"),"_",
-#                    max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]),".rda")
-#  save(dLH,file=paste0(pathSave,fileSave))
+#  b <- Sys.time()
+#  b-a
 #  
 #  # Period data; no mortality
 #  dLHnm <- tryCatch(VirtualPop::BuildViP(user,pw_HMD,pw_HFD,
@@ -78,12 +79,16 @@ ncohort <- length(dLH$ID[dLH$gen==1])
 #                            countrycode="USA",
 #                            cohort=1964,
 #                            ncohort=1000,
-#                            ngen=2,
+#                            ngen=5,
 #                            mort=TRUE),
 #                                    error=function(cond) {message("Error reading HFD data. Download data and read data locally (see Tutorial Section 4.2).")})
 #  
+#  # Specify pathSave, the folder to save dLH.
+#  pathSave <- "Name of folder to save dLH"
+#  pathSave <- "/Users/frans/VirtualPop_data/"
 #  fileSave <-paste0("dLH_",attr(dLH,"country"),attr(dLH,"refyear"),"_",
-#                    max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]))
+#                    max(dLH$gen)-1,"_",length(dLH$ID[dLH$gen==1]),".RData")
+#  # or paste0("dLHc_".....   or  paste0("dLHnm_".....
 #  save(dLH,file=paste0(pathSave,fileSave))
 
 ## -----------------------------------------------------------------------------
@@ -202,7 +207,7 @@ xmax <- 110
 p <- p + xlab("Age")+ylab("Density")
 p <- p +  scale_x_continuous(breaks=seq(xmin,xmax,by=10)) 
 p <- p + scale_y_continuous (breaks=seq(0,0.04,by=0.005)) 
-p <- p + theme(legend.position = c(0.1, 0.85))
+p <- p + theme(legend.position = "inside",legend.position.inside = c(0.1, 0.8))
 p
 
 ## ----comment=""---------------------------------------------------------------

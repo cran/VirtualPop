@@ -69,6 +69,7 @@ for (i in 1:nrow(dat0))
      dch <- rbind(dch,d)
    }
 }
+dat0$nch[is.na(dat0$nch)] <- 0 
 if (is.null(dch)) dch <- NA else
 { dch$ID <- max(dat0$ID) + idseq[-1]
  dch$sex <- factor (rbinom(n=nrow(dch),size=1,prob=0.5)+1,levels=c(1,2),labels=c("Male","Female"))

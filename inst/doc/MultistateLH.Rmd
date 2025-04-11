@@ -326,7 +326,7 @@ Individual records include empty spaces for the ID an individual's partner, moth
 
 The simple PartnerSearch model is implemented in function PartnerSearch(). It accepts the data frame $d$ as input and returns d augmented by the partner's ID. 
 ```{r,results="hide"}
-d <- VirtualPop::PartnerSearch(dLH=d)
+d <- VirtualPop::PartnerSearch(idego=d$ID,d=d)
 ```
 The first lines of the data frame of individual records are:
 
@@ -339,7 +339,7 @@ kableExtra::kable_styling(out,latex_options=c("scale_down", "HOLD_position"))
 For women, ages at childbirth are determined by sampling from waiting time distributions with parameters equal to the fertility rates by age and parity. When a child is born, it receives a unique ID and a new individual data record is created. The children of the initial cohort constitute generation 2. The date of birth of a child is determined by the date of birth of the mother and her exact age at birth of the child. The ID of the mother is added to the child’s record and the child’s ID is added to the data record of the mother. The record linkages enable to track the descending line of offspring and ascending line of parentage. It significantly facilitates the study of genealogies and kinship networks. The new-born is also assigned a sex using the empirical sex ratio at birth. A partner is allocated by randomly drawing an ID of members of the same generation but of opposite sex. The lifespan and the fertility career of each member of the second generation is determined by sampling the appropriate probability distributions. The function $Children()$ does the computations. The first argument is the individual data structure,$d$ in this illustration, and the second is the object with the transition rates. For instance, 
 
 ```{r,warning=FALSE}
-dch1 <- VirtualPop::Children(dat0=d,rates=rates)
+dch1 <- VirtualPop::Children(dat0=d$d,rates=rates)
 ```
 The object $dch1$ has two components: $data$ and $dch$. The first components is comparable to the women's file in demographic surveys and the second to the children's file (see e.g. Demographic and Health Survey (DHS) [https://dhsprogram.com]). The object $data$ is the input object $d$ with, for each mother and father, information on number of children.
   
@@ -359,19 +359,19 @@ kableExtra::kable_styling(out,latex_options=c("scale_down","HOLD_position"))
 The members of the second generation partner with individuals of the same generation. Partners are allocated randomly. 
 
 ```{r,results="hide"}
-d2 <- VirtualPop::PartnerSearch (dLH=dch1$dch)
+d2 <- VirtualPop::PartnerSearch (idego=dch1$dch$ID,d=dch1$dch)
 ```
-The object $d2$ is $dch1\$dch$ augmented by the IDs of partners. The data frame contains the data on the second generation in a format that is consistent with the data frame of the first generation, which facilitates merging the data frames. The Children() function is used repeatedly to obtain data on the third and higher generations:
+The object $d2\$d$ is $dch1\$dch$ augmented by the IDs of partners. The data frame contains the data on the second generation in a format that is consistent with the data frame of the first generation, which facilitates merging the data frames. The Children() function is used repeatedly to obtain data on the third and higher generations:
 ```{r,warning=FALSE}
-dch2 <-  VirtualPop::Children(dat0=d2,rates=rates)
+dch2 <-  VirtualPop::Children(dat0=d2$d,rates=rates)
 ```
 PartnerSearch in the third generation is the outcome of a random search:
 
 ```{r,results="hide",warning=FALSE}
-d3 <- VirtualPop::PartnerSearch (dLH=dch2$dch)
-dch3 <-  VirtualPop::Children(dat0=d3,rates=rates)
-d4 <- VirtualPop::PartnerSearch (dLH=dch3$dch)
-dch4 <-  VirtualPop::Children(dat0=d4,rates=rates)
+d3 <- VirtualPop::PartnerSearch (idego=dch2$dch$ID,d=dch2$dch)
+dch3 <-  VirtualPop::Children(dat0=d3$d,rates=rates)
+d4 <- VirtualPop::PartnerSearch (idego=dch3$dch$ID,d=dch3$dch)
+dch4 <-  VirtualPop::Children(dat0=d4$d,rates=rates)
 d4 <- dch4$data[,1:which (colnames(dch4$data)=="nch")]
 ```
 The object $d4$ has data on the fourth generation, including on the children of members of the fourth generation. 
